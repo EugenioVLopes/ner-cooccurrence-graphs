@@ -1,0 +1,18 @@
+[project]
+name = "datastructure2"
+version = "0.1.0"
+description = "Análise de estruturas de dados e grafos de conhecimento a partir de repositórios Python"
+requires-python = ">=3.12"
+dependencies = [
+    "spacy>=3.7",
+    "networkx>=3.2",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "pandas>=2.1",
+    "numpy>=1.26",
+    "nxviz>=0.7",
+    "pyvis>=0.3",
+    "python-louvain>=0.16",
+    "tqdm>=4.66",
+    "jupyter>=1.0",
+]
