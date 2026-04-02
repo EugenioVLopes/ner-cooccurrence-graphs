@@ -16,12 +16,12 @@ enquanto elimina nós periféricos de baixo grau.
 
 ### Codificação visual
 
-| Atributo     | Codificação                                    |
-|-------------|------------------------------------------------|
-| **Cor**     | Comunidade Louvain (paleta de 20 cores)        |
+| Atributo    | Codificação                                                           |
+| ----------- | --------------------------------------------------------------------- |
+| **Cor**     | Comunidade Louvain (paleta de 20 cores)                               |
 | **Forma**   | Tipo de entidade: LIB=●, TECH=◆, CLASS=▲, FUNC=■, ORG=★, PER=▽, LOC=⬡ |
-| **Tamanho** | Proporcional ao grau (8–60px)                  |
-| **Aresta**  | Largura proporcional ao peso de co-ocorrência  |
+| **Tamanho** | Proporcional ao grau (8–60px)                                         |
+| **Aresta**  | Largura proporcional ao peso de co-ocorrência                         |
 
 ### Interatividade
 
@@ -78,8 +78,8 @@ O pyvis resolve isso com:
 
 ## Figuras geradas
 
-| Arquivo                                        | Conteúdo                              |
-|------------------------------------------------|---------------------------------------|
-| `figures/05-pyvis/interactive_sentence.html`   | Grafo interativo — sentença           |
-| `figures/05-pyvis/interactive_paragraph.html`  | Grafo interativo — parágrafo          |
-| `figures/05-pyvis/interactive_k_chars.html`    | Grafo interativo — k-chars (500)      |
+| Arquivo                                       | Conteúdo                         |
+| --------------------------------------------- | -------------------------------- |
+| `figures/05-pyvis/interactive_sentence.html`  | Grafo interativo — sentença      |
+| `figures/05-pyvis/interactive_paragraph.html` | Grafo interativo — parágrafo     |
+| `figures/05-pyvis/interactive_k_chars.html`   | Grafo interativo — k-chars (500) |

@@ -9,7 +9,7 @@
 ## Estatísticas da extração
 
 | Métrica                  | Valor      |
-|--------------------------|------------|
+| ------------------------ | ---------- |
 | Arquivos TypeScript      | 1.888      |
 | Arquivos de documentação | 0          |
 | Total de blocos de texto | 78.526     |
@@ -17,12 +17,12 @@
 
 ### Distribuição por tipo de bloco
 
-| Tipo       | Quantidade | Descrição                          |
-|------------|------------|-------------------------------------|
-| `import`   | 16.035     | Imports de módulos e pacotes        |
-| `comment`  | 43.880     | Comentários de linha (`//`)         |
-| `code`     | 10.550     | Classes, interfaces, funções, enums |
-| `docstring`| 8.061      | Blocos JSDoc / `/* */`              |
+| Tipo        | Quantidade | Descrição                           |
+| ----------- | ---------- | ----------------------------------- |
+| `import`    | 16.035     | Imports de módulos e pacotes        |
+| `comment`   | 43.880     | Comentários de linha (`//`)         |
+| `code`      | 10.550     | Classes, interfaces, funções, enums |
+| `docstring` | 8.061      | Blocos JSDoc / `/* */`              |
 
 ## Métricas dos grafos de co-ocorrência
 
@@ -31,7 +31,7 @@ NER executado com regex + dicionários (sem spaCy).
 ### Métricas gerais
 
 | Métrica                | Sentença | Parágrafo | K-chars (500) |
-|------------------------|----------|-----------|---------------|
+| ---------------------- | -------- | --------- | ------------- |
 | Nós                    | 955      | 1.819     | 1.812         |
 | Arestas                | 1.152    | 5.456     | 4.538         |
 | Densidade              | 0,0025   | 0,0033    | 0,0028        |
@@ -46,31 +46,31 @@ NER executado com regex + dicionários (sem spaCy).
 
 ### Top 10 entidades por grau (parágrafo)
 
-| Entidade     | Tipo  | Grau |
-|-------------|-------|------|
-| src          | LIB   | 214  |
-| claude       | LIB   | 165  |
-| api          | TECH  | 154  |
-| git          | TECH  | 119  |
-| anthropic    | LIB   | 117  |
-| next         | LIB   | 101  |
-| https        | TECH  | 86   |
-| powershell   | CLASS | 82   |
-| github       | TECH  | 71   |
-| ink          | LIB   | 67   |
+| Entidade   | Tipo  | Grau |
+| ---------- | ----- | ---- |
+| src        | LIB   | 214  |
+| claude     | LIB   | 165  |
+| api        | TECH  | 154  |
+| git        | TECH  | 119  |
+| anthropic  | LIB   | 117  |
+| next       | LIB   | 101  |
+| https      | TECH  | 86   |
+| powershell | CLASS | 82   |
+| github     | TECH  | 71   |
+| ink        | LIB   | 67   |
 
 ## Figuras geradas
 
-| Arquivo                          | Conteúdo                               |
-|----------------------------------|----------------------------------------|
-| `figures/degree_dist_sentence.png`   | Distribuição de grau — sentença    |
-| `figures/degree_dist_paragraph.png`  | Distribuição de grau — parágrafo   |
-| `figures/degree_dist_k_chars.png`    | Distribuição de grau — k-chars     |
-| `figures/graph_viz_sentence.png`     | Grafo — sentença (layout de força) |
-| `figures/graph_viz_paragraph.png`    | Grafo — parágrafo                  |
-| `figures/graph_viz_k_chars.png`      | Grafo — k-chars                    |
-| `figures/comparison_table.png`       | Tabela comparativa de métricas     |
-| `figures/centrality_comparison.png`  | Top entidades por centralidade     |
+| Arquivo                             | Conteúdo                           |
+| ----------------------------------- | ---------------------------------- |
+| `figures/degree_dist_sentence.png`  | Distribuição de grau — sentença    |
+| `figures/degree_dist_paragraph.png` | Distribuição de grau — parágrafo   |
+| `figures/degree_dist_k_chars.png`   | Distribuição de grau — k-chars     |
+| `figures/graph_viz_sentence.png`    | Grafo — sentença (layout de força) |
+| `figures/graph_viz_paragraph.png`   | Grafo — parágrafo                  |
+| `figures/graph_viz_k_chars.png`     | Grafo — k-chars                    |
+| `figures/comparison_table.png`      | Tabela comparativa de métricas     |
+| `figures/centrality_comparison.png` | Top entidades por centralidade     |
 
 ## Análise e insights
 

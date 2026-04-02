@@ -9,7 +9,7 @@
 ## Estatísticas da extração
 
 | Métrica                  | Valor      |
-|--------------------------|------------|
+| ------------------------ | ---------- |
 | Arquivos TypeScript      | 1.888      |
 | Arquivos de documentação | 0          |
 | Total de blocos de texto | 78.526     |
@@ -17,12 +17,12 @@
 
 ### Distribuição por tipo de bloco
 
-| Tipo       | Quantidade | Descrição                          |
-|------------|------------|-------------------------------------|
-| `import`   | 16.035     | Imports de módulos e pacotes        |
-| `comment`  | 43.880     | Comentários de linha (`//`)         |
-| `code`     | 10.550     | Classes, interfaces, funções, enums |
-| `docstring`| 8.061      | Blocos JSDoc / `/* */`              |
+| Tipo        | Quantidade | Descrição                           |
+| ----------- | ---------- | ----------------------------------- |
+| `import`    | 16.035     | Imports de módulos e pacotes        |
+| `comment`   | 43.880     | Comentários de linha (`//`)         |
+| `code`      | 10.550     | Classes, interfaces, funções, enums |
+| `docstring` | 8.061      | Blocos JSDoc / `/* */`              |
 
 ## Métricas dos grafos de co-ocorrência
 
@@ -32,7 +32,7 @@ NER executado com regex + dicionários (sem spaCy), com filtragem de ruído
 ### Métricas gerais
 
 | Métrica                | Sentença | Parágrafo | K-chars (500) |
-|------------------------|----------|-----------|---------------|
+| ---------------------- | -------- | --------- | ------------- |
 | Nós                    | 921      | 1.763     | 1.756         |
 | Arestas                | 1.064    | 4.931     | 4.163         |
 | Densidade              | 0,0025   | 0,0032    | 0,0027        |
@@ -47,31 +47,31 @@ NER executado com regex + dicionários (sem spaCy), com filtragem de ruído
 
 ### Top 10 entidades por grau (parágrafo)
 
-| Entidade     | Tipo  | Grau |
-|-------------|-------|------|
-| claude       | LIB   | 156  |
-| api          | TECH  | 146  |
-| mcp          | TECH  | 131  |
-| git          | TECH  | 112  |
-| anthropic    | LIB   | 110  |
-| github       | TECH  | 66   |
-| oauth        | TECH  | 65   |
-| ink          | LIB   | 63   |
-| react        | LIB   | 60   |
-| windows      | TECH  | 57   |
+| Entidade  | Tipo | Grau |
+| --------- | ---- | ---- |
+| claude    | LIB  | 156  |
+| api       | TECH | 146  |
+| mcp       | TECH | 131  |
+| git       | TECH | 112  |
+| anthropic | LIB  | 110  |
+| github    | TECH | 66   |
+| oauth     | TECH | 65   |
+| ink       | LIB  | 63   |
+| react     | LIB  | 60   |
+| windows   | TECH | 57   |
 
 ## Figuras geradas
 
-| Arquivo                              | Conteúdo                           |
-|--------------------------------------|------------------------------------|
-| `figures/degree_dist_sentence.png`   | Distribuição de grau — sentença    |
-| `figures/degree_dist_paragraph.png`  | Distribuição de grau — parágrafo   |
-| `figures/degree_dist_k_chars.png`    | Distribuição de grau — k-chars     |
-| `figures/graph_viz_sentence.png`     | Grafo — sentença (layout de força) |
-| `figures/graph_viz_paragraph.png`    | Grafo — parágrafo                  |
-| `figures/graph_viz_k_chars.png`      | Grafo — k-chars                    |
-| `figures/comparison_table.png`       | Tabela comparativa de métricas     |
-| `figures/centrality_comparison.png`  | Top entidades por centralidade     |
+| Arquivo                             | Conteúdo                           |
+| ----------------------------------- | ---------------------------------- |
+| `figures/degree_dist_sentence.png`  | Distribuição de grau — sentença    |
+| `figures/degree_dist_paragraph.png` | Distribuição de grau — parágrafo   |
+| `figures/degree_dist_k_chars.png`   | Distribuição de grau — k-chars     |
+| `figures/graph_viz_sentence.png`    | Grafo — sentença (layout de força) |
+| `figures/graph_viz_paragraph.png`   | Grafo — parágrafo                  |
+| `figures/graph_viz_k_chars.png`     | Grafo — k-chars                    |
+| `figures/comparison_table.png`      | Tabela comparativa de métricas     |
+| `figures/centrality_comparison.png` | Top entidades por centralidade     |
 
 ## Análise e insights
 
@@ -116,6 +116,7 @@ rica para NER de linguagem natural quando spaCy for adicionado.
 ### 5. Filtragem de ruído aplicada
 
 Foram removidos das entidades:
+
 - **Path fragments:** `src`, `lib`, `dist`, `types`, `utils`, `index`, `vendor`
 - **Protocolos genéricos:** `http`, `https`, `tcp`, `udp`, `ssh`
 - **Palavras ambíguas:** `go`, `next`, `fetch`, `path`, `moment`, `sharp`

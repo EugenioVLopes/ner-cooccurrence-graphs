@@ -14,7 +14,7 @@
 ### Tamanho dos grafos
 
 | Granularidade | Nós (02) | Nós (03) | Arestas (02) | Arestas (03) |
-|---------------|----------|----------|--------------|--------------|
+| ------------- | -------- | -------- | ------------ | ------------ |
 | Sentença      | 921      | 5.791    | 1.064        | 5.947        |
 | Parágrafo     | 1.763    | 7.746    | 4.931        | 22.552       |
 | K-chars (500) | 1.756    | 7.845    | 4.163        | 15.160       |
@@ -25,7 +25,7 @@ entidades de linguagem natural que o regex não capturava.
 ### Métricas gerais (parágrafo)
 
 | Métrica                | 02-filtered | 03-spacy |
-|------------------------|-------------|----------|
+| ---------------------- | ----------- | -------- |
 | Nós                    | 1.763       | 7.746    |
 | Arestas                | 4.931       | 22.552   |
 | Densidade              | 0,0032      | 0,0008   |
@@ -40,18 +40,18 @@ entidades de linguagem natural que o regex não capturava.
 
 ### Top 10 entidades por grau (parágrafo)
 
-| Entidade   | Tipo  | Grau |
-|-----------|-------|------|
-| claude     | LIB   | 677  |
-| api        | TECH  | 585  |
-| git        | TECH  | 465  |
-| mcp        | TECH  | 374  |
-| anthropic  | LIB   | 316  |
-| oauth      | TECH  | 306  |
-| windows    | TECH  | 283  |
-| cli        | ORG   | 261  |
-| github     | TECH  | 254  |
-| growthbook | LIB   | 223  |
+| Entidade   | Tipo | Grau |
+| ---------- | ---- | ---- |
+| claude     | LIB  | 677  |
+| api        | TECH | 585  |
+| git        | TECH | 465  |
+| mcp        | TECH | 374  |
+| anthropic  | LIB  | 316  |
+| oauth      | TECH | 306  |
+| windows    | TECH | 283  |
+| cli        | ORG  | 261  |
+| github     | TECH | 254  |
+| growthbook | LIB  | 223  |
 
 ## Análise
 

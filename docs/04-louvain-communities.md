@@ -15,13 +15,13 @@
 - Alta modularidade indica estrutura de comunidades muito bem definida,
   mas muitas comunidades pequenas (grafo esparso).
 
-| Comunidade | Nós | Tema                         | Membros principais                            |
-|------------|-----|------------------------------|-----------------------------------------------|
-| C0         | 490 | API e autenticação           | api, claude, oauth, anthropic, cli            |
-| C1         | 273 | MCP (Model Context Protocol) | mcp, zod, json, ScopedMcpServerConfig         |
-| C2         | 250 | Cross-platform / OS          | windows, macos, linux, powershell, wsl        |
-| C3         | 208 | UI (React/Ink)               | react, ink, repl, ansi, tsx                   |
-| C4         | 175 | Git e integrações            | git, github, rest, gitlab                     |
+| Comunidade | Nós | Tema                         | Membros principais                     |
+| ---------- | --- | ---------------------------- | -------------------------------------- |
+| C0         | 490 | API e autenticação           | api, claude, oauth, anthropic, cli     |
+| C1         | 273 | MCP (Model Context Protocol) | mcp, zod, json, ScopedMcpServerConfig  |
+| C2         | 250 | Cross-platform / OS          | windows, macos, linux, powershell, wsl |
+| C3         | 208 | UI (React/Ink)               | react, ink, repl, ansi, tsx            |
+| C4         | 175 | Git e integrações            | git, github, rest, gitlab              |
 
 ### Parágrafo
 
@@ -29,25 +29,25 @@
 - Modularity menor que sentença — chunks maiores mesclam mais entidades,
   gerando comunidades menos separadas.
 
-| Comunidade | Nós   | Tema                         | Membros principais                            |
-|------------|-------|------------------------------|-----------------------------------------------|
-| C0         | 1.296 | Core (API + auth + MCP)      | claude, api, mcp, oauth, cli                  |
-| C1         | 691   | Git e cross-platform         | git, windows, github, powershell, macos       |
-| C2         | 391   | UI rendering                 | ink, ScrollBox, DOM, SGR, ScrollTop           |
-| C3         | 354   | State e tools                | AppState, AbortSignal, ToolUseContext, AgentTool |
-| C4         | 226   | Misc / temporal              | java, utc, month                              |
+| Comunidade | Nós   | Tema                    | Membros principais                               |
+| ---------- | ----- | ----------------------- | ------------------------------------------------ |
+| C0         | 1.296 | Core (API + auth + MCP) | claude, api, mcp, oauth, cli                     |
+| C1         | 691   | Git e cross-platform    | git, windows, github, powershell, macos          |
+| C2         | 391   | UI rendering            | ink, ScrollBox, DOM, SGR, ScrollTop              |
+| C3         | 354   | State e tools           | AppState, AbortSignal, ToolUseContext, AgentTool |
+| C4         | 226   | Misc / temporal         | java, utc, month                                 |
 
 ### K-chars (500)
 
 - **1.408 comunidades** | Modularity: **0,7435**
 
-| Comunidade | Nós | Tema                         | Membros principais                            |
-|------------|-----|------------------------------|-----------------------------------------------|
-| C0         | 991 | Core (API + git)             | claude, api, git, cli, github                 |
-| C1         | 509 | Cross-platform / shell       | windows, macos, powershell, linux, BashTool   |
-| C2         | 410 | Autenticação                 | oauth, jwt, 401, axios                        |
-| C3         | 312 | MCP                          | mcp, ScopedMcpServerConfig, lsp               |
-| C4         | 301 | UI rendering                 | ink, ScrollBox, SGR, DOM, ANSI                |
+| Comunidade | Nós | Tema                   | Membros principais                          |
+| ---------- | --- | ---------------------- | ------------------------------------------- |
+| C0         | 991 | Core (API + git)       | claude, api, git, cli, github               |
+| C1         | 509 | Cross-platform / shell | windows, macos, powershell, linux, BashTool |
+| C2         | 410 | Autenticação           | oauth, jwt, 401, axios                      |
+| C3         | 312 | MCP                    | mcp, ScopedMcpServerConfig, lsp             |
+| C4         | 301 | UI rendering           | ink, ScrollBox, SGR, DOM, ANSI              |
 
 ## Análise dos clusters temáticos
 
@@ -84,6 +84,7 @@ Independente da granularidade, os mesmos temas emergem:
 ### Insight arquitetural
 
 A detecção de comunidades revela a arquitetura do Claude Code:
+
 - Um **core** de API/auth fortemente conectado
 - **Subsistemas satélite** (MCP, UI, Git, OS) com interfaces claras
 - A camada de **UI** é surpreendentemente isolada — pouca co-ocorrência com
@@ -91,11 +92,11 @@ A detecção de comunidades revela a arquitetura do Claude Code:
 
 ## Figuras geradas
 
-| Arquivo                                  | Conteúdo                               |
-|------------------------------------------|----------------------------------------|
-| `figures/04-louvain/communities_*.png`   | Grafo colorido por comunidade Louvain  |
-| `figures/04-louvain/community_sizes_*.png` | Distribuição de tamanhos             |
-| `figures/04-louvain/degree_dist_*.png`   | Distribuição de grau                   |
-| `figures/04-louvain/graph_viz_*.png`     | Grafo colorido por tipo de entidade    |
-| `figures/04-louvain/comparison_table.png`| Tabela comparativa                     |
-| `figures/04-louvain/centrality_comparison.png` | Top entidades por centralidade   |
+| Arquivo                                        | Conteúdo                              |
+| ---------------------------------------------- | ------------------------------------- |
+| `figures/04-louvain/communities_*.png`         | Grafo colorido por comunidade Louvain |
+| `figures/04-louvain/community_sizes_*.png`     | Distribuição de tamanhos              |
+| `figures/04-louvain/degree_dist_*.png`         | Distribuição de grau                  |
+| `figures/04-louvain/graph_viz_*.png`           | Grafo colorido por tipo de entidade   |
+| `figures/04-louvain/comparison_table.png`      | Tabela comparativa                    |
+| `figures/04-louvain/centrality_comparison.png` | Top entidades por centralidade        |
