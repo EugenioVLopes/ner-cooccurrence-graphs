@@ -22,9 +22,9 @@ comunidades e visualizacao interativa.
 
 Explore os grafos de co-ocorrencia diretamente no navegador:
 
-- [Grafo — Sentenca](https://eugeniovlopes.github.io/datastructure2/figures/05-pyvis/interactive_sentence.html)
-- [Grafo — Paragrafo](https://eugeniovlopes.github.io/datastructure2/figures/05-pyvis/interactive_paragraph.html)
-- [Grafo — K-chars (500)](https://eugeniovlopes.github.io/datastructure2/figures/05-pyvis/interactive_k_chars.html)
+- [Grafo — Sentenca](https://eugeniovlopes.github.io/ner-cooccurrence-graphs/figures/05-pyvis/interactive_sentence.html)
+- [Grafo — Paragrafo](https://eugeniovlopes.github.io/ner-cooccurrence-graphs/figures/05-pyvis/interactive_paragraph.html)
+- [Grafo — K-chars (500)](https://eugeniovlopes.github.io/ner-cooccurrence-graphs/figures/05-pyvis/interactive_k_chars.html)
 
 ## Estrutura do Repositorio
 
