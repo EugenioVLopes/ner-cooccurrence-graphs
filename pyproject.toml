@@ -15,4 +15,5 @@ dependencies = [
     "python-louvain>=0.16",
     "tqdm>=4.66",
     "jupyter>=1.0",
+    "scipy>=1.17.1",
 ]
