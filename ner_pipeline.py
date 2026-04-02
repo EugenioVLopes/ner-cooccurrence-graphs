@@ -44,35 +44,50 @@ class Entity:
 
 # Bibliotecas/pacotes conhecidos (npm / Node.js)
 KNOWN_LIBRARIES = {
-    "react", "next", "express", "fastify", "koa", "nest", "nestjs",
-    "axios", "fetch", "node-fetch", "got", "superagent",
+    "react", "nextjs", "express", "fastify", "koa", "nest", "nestjs",
+    "axios", "node-fetch", "superagent",
     "zod", "yup", "joi", "ajv", "typebox",
     "prisma", "typeorm", "sequelize", "knex", "drizzle",
     "jest", "vitest", "mocha", "chai", "playwright", "cypress",
     "webpack", "vite", "esbuild", "rollup", "turbopack", "swc",
     "tailwind", "styled-components", "emotion", "sass",
     "redux", "zustand", "mobx", "jotai", "recoil",
-    "lodash", "ramda", "date-fns", "dayjs", "moment",
+    "lodash", "lodash-es", "ramda", "date-fns", "dayjs",
     "winston", "pino", "bunyan",
     "openai", "langchain", "anthropic", "claude",
-    "ink", "chalk", "ora", "commander", "yargs", "meow",
-    "socket.io", "ws", "rxjs",
-    "sharp", "jimp", "puppeteer",
-    "sentry", "datadog",
+    "ink", "chalk", "commander", "yargs", "meow",
+    "socket.io", "rxjs",
+    "puppeteer", "jimp",
+    "sentry", "datadog", "growthbook",
     "eslint", "prettier", "biome",
 }
 
 # Tecnologias e frameworks
 KNOWN_TECH = {
-    "python", "javascript", "typescript", "rust", "go", "java", "c++",
+    "python", "javascript", "typescript", "rust", "java", "c++",
     "docker", "kubernetes", "k8s", "git", "github", "gitlab",
     "linux", "ubuntu", "windows", "macos",
     "postgresql", "mysql", "mongodb", "redis", "elasticsearch",
     "api", "rest", "graphql", "grpc", "websocket",
     "ci/cd", "jenkins", "github actions", "terraform", "ansible",
-    "llm", "gpt", "bert", "transformer", "attention", "embedding",
-    "machine learning", "deep learning", "nlp", "ner", "cnn", "rnn",
+    "llm", "gpt", "bert", "transformer", "embedding",
+    "machine learning", "deep learning", "nlp", "ner",
+    "oauth", "jwt", "mcp",
+}
+
+# Palavras a ignorar — path fragments, protocolos genéricos, palavras ambíguas
+STOPWORDS = {
+    # path fragments comuns em imports TS
+    "src", "lib", "dist", "types", "utils", "index", "test", "tests",
+    "config", "scripts", "build", "out", "tmp", "vendor",
+    # protocolos genéricos (pouco valor semântico)
     "http", "https", "tcp", "udp", "ssh",
+    # palavras ambíguas que geram falsos positivos
+    "go", "next", "fetch", "path", "ora", "got", "ws",
+    "attention", "sharp", "moment",
+    # erros comuns, JS builtins
+    "error", "string", "number", "boolean", "object", "array",
+    "null", "undefined", "void", "any", "never", "unknown",
 }
 
 
@@ -86,12 +101,12 @@ def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
     # 1. TS/JS imports: import ... from 'package'
     for match in re.finditer(r"""import\s+(?:type\s+)?(?:[\w*${}\s,]+\s+from\s+)?['"]([^'"]+)['"]""", text):
         pkg = match.group(1)
-        # Pegar nome do pacote (sem caminhos relativos)
         if not pkg.startswith("."):
             base = pkg.split("/")[0].lstrip("@")
-            if base.lower() in KNOWN_LIBRARIES or len(base) > 2:
+            name = base.lower()
+            if name not in STOPWORDS and (name in KNOWN_LIBRARIES or len(base) > 2):
                 entities.append(Entity(
-                    text=base.lower(), label="LIB", source_file=source_file,
+                    text=name, label="LIB", source_file=source_file,
                     start=match.start(), end=match.end()
                 ))
 
@@ -113,7 +128,6 @@ def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
     # 4. Bibliotecas conhecidas mencionadas no texto
     for lib in KNOWN_LIBRARIES:
         if lib in text_lower:
-            # Verificar se não é parte de outra palavra
             pattern = r'\b' + re.escape(lib) + r'\b'
             if re.search(pattern, text_lower):
                 entities.append(Entity(
@@ -130,9 +144,14 @@ def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
                 ))
 
     # 6. CamelCase como possíveis classes/tipos
+    camelcase_ignore = {
+        "TypeError", "ValueError", "KeyError", "IndexError",
+        "RangeError", "SyntaxError", "ReferenceError",
+        "PowerShell", "JavaScript", "TypeScript",
+    }
     for match in re.finditer(r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b', text):
         name = match.group(1)
-        if name not in ("TypeError", "ValueError", "KeyError", "IndexError"):
+        if name not in camelcase_ignore and name.lower() not in STOPWORDS:
             entities.append(Entity(
                 text=name, label="CLASS", source_file=source_file,
                 start=match.start(), end=match.end()
