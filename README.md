@@ -43,7 +43,6 @@ Explore os grafos de co-ocorrencia diretamente no navegador:
 │   ├── 04-louvain/           # Deteccao de comunidades Louvain
 │   └── 05-pyvis/             # Visualizacoes interativas (HTML)
 ├── docs/                     # Relatorios de cada iteracao
-├── slides/                   # Material de aula do professor
 ├── pyproject.toml
 ├── uv.lock
 └── README.md

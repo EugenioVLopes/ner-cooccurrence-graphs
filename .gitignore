@@ -19,6 +19,7 @@ env/
 .vscode/
 .idea/
 *.swp
+.claude/
 
 # OS
 .DS_Store
@@ -27,6 +28,7 @@ Thumbs.db
 # Data (raw files may be large)
 data/raw/*
 !data/raw/.gitkeep
+slides/
 
 # Outputs
 *.gexf
