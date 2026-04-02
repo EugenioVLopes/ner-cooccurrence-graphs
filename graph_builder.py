@@ -223,7 +223,7 @@ if __name__ == "__main__":
     print(f"   → {len(extraction.texts)} blocos extraídos")
 
     # NER + Grafo
-    pipeline = NERPipeline(use_spacy=False)  # sem spaCy para teste rápido
+    pipeline = NERPipeline(use_spacy=True)
     graphs = build_all_granularities(extraction.texts, pipeline)
 
     # Salvar

@@ -88,6 +88,11 @@ STOPWORDS = {
     # erros comuns, JS builtins
     "error", "string", "number", "boolean", "object", "array",
     "null", "undefined", "void", "any", "never", "unknown",
+    # palavras comuns que spaCy classifica erroneamente
+    "função", "classe", "first", "second", "one", "two", "three",
+    "new", "old", "last", "top", "set", "get", "use", "run",
+    "true", "false", "yes", "no", "ok", "sdk",
+    "max", "min", "default", "none", "all", "key", "value", "type",
 }
 
 
@@ -178,9 +183,10 @@ def extract_spacy_entities(text: str, nlp, source_file: str = "") -> list[Entity
 
     for ent in doc.ents:
         label = label_map.get(ent.label_, "MISC")
-        if len(ent.text.strip()) > 1:  # ignora entidades de 1 caractere
+        clean = ent.text.strip()
+        if len(clean) > 2 and clean.lower() not in STOPWORDS:
             entities.append(Entity(
-                text=ent.text.strip(),
+                text=clean,
                 label=label,
                 source_file=source_file,
                 start=ent.start_char,
@@ -195,7 +201,7 @@ class NERPipeline:
     Pipeline completo de NER que combina spaCy com extração customizada.
     """
 
-    def __init__(self, spacy_model: str = "pt_core_news_lg", use_spacy: bool = True):
+    def __init__(self, spacy_model: str = "en_core_web_lg", use_spacy: bool = True):
         self.use_spacy = use_spacy and SPACY_AVAILABLE
         self.nlp = None
 
