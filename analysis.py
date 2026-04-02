@@ -13,6 +13,7 @@ Implementa as métricas estudadas na disciplina:
 from collections import Counter
 from typing import Optional
 
+import community as community_louvain
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -321,6 +322,134 @@ def plot_centrality_comparison(centralities_dict: dict[str, pd.DataFrame],
 
 
 # =============================================================================
+# Detecção de Comunidades (Louvain)
+# =============================================================================
+
+def detect_communities(G: nx.Graph) -> dict:
+    """
+    Detecta comunidades usando o algoritmo de Louvain.
+
+    Returns:
+        Dict com: partition (nó → comunidade), num_communities, modularity,
+        community_sizes, top_communities (lista de dicts com membros e labels).
+    """
+    partition = community_louvain.best_partition(G, weight="weight", random_state=42)
+    modularity = community_louvain.modularity(partition, G, weight="weight")
+
+    # Agrupar nós por comunidade
+    communities: dict[int, list[str]] = {}
+    for node, comm_id in partition.items():
+        communities.setdefault(comm_id, []).append(node)
+
+    # Ordenar por tamanho
+    sorted_comms = sorted(communities.items(), key=lambda x: len(x[1]), reverse=True)
+
+    top_communities = []
+    for comm_id, members in sorted_comms[:15]:
+        # Top membros por grau dentro da comunidade
+        sub = G.subgraph(members)
+        by_degree = sorted(sub.degree(), key=lambda x: x[1], reverse=True)
+        top_members = [(n, d, G.nodes[n].get("label", "?")) for n, d in by_degree[:10]]
+        # Distribuição de labels
+        labels = Counter(G.nodes[n].get("label", "?") for n in members)
+        top_communities.append({
+            "id": comm_id,
+            "size": len(members),
+            "top_members": top_members,
+            "label_distribution": dict(labels.most_common()),
+        })
+
+    return {
+        "partition": partition,
+        "num_communities": len(communities),
+        "modularity": modularity,
+        "community_sizes": [len(m) for _, m in sorted_comms],
+        "top_communities": top_communities,
+    }
+
+
+def plot_communities(G: nx.Graph, partition: dict, title: str = "",
+                     max_nodes: int = 150, save_path: Optional[str] = None):
+    """Visualiza o grafo colorido por comunidade Louvain."""
+    # Subgrafo dos nós mais conectados
+    if G.number_of_nodes() > max_nodes:
+        top_nodes = sorted(G.degree(), key=lambda x: x[1], reverse=True)[:max_nodes]
+        nodes = [n for n, _ in top_nodes]
+    else:
+        nodes = list(G.nodes())
+
+    G_sub = G.subgraph(nodes).copy()
+    sub_partition = {n: partition[n] for n in G_sub.nodes() if n in partition}
+
+    fig, ax = plt.subplots(1, 1, figsize=(16, 12))
+
+    pos = nx.spring_layout(G_sub, k=2 / np.sqrt(G_sub.number_of_nodes()),
+                           iterations=50, seed=42)
+
+    # Cores por comunidade
+    unique_comms = sorted(set(sub_partition.values()))
+    cmap = plt.cm.get_cmap("tab20", len(unique_comms))
+    comm_to_color = {c: cmap(i) for i, c in enumerate(unique_comms)}
+    node_colors = [comm_to_color.get(sub_partition.get(n, -1), "#999999") for n in G_sub.nodes()]
+
+    degrees = dict(G_sub.degree())
+    node_sizes = [max(degrees[n] * 30, 80) for n in G_sub.nodes()]
+
+    edge_weights = [G_sub[u][v].get("weight", 1) for u, v in G_sub.edges()]
+    max_weight = max(edge_weights) if edge_weights else 1
+    edge_widths = [0.3 + 1.5 * (w / max_weight) for w in edge_weights]
+
+    nx.draw_networkx_edges(G_sub, pos, alpha=0.15, width=edge_widths,
+                           edge_color="#cccccc", ax=ax)
+    nx.draw_networkx_nodes(G_sub, pos, node_color=node_colors,
+                           node_size=node_sizes, alpha=0.8, ax=ax)
+
+    avg_degree = np.mean(list(degrees.values()))
+    labels = {n: n for n in G_sub.nodes() if degrees[n] > avg_degree * 1.5}
+    nx.draw_networkx_labels(G_sub, pos, labels, font_size=7, font_weight="bold", ax=ax)
+
+    ax.set_title(f"Comunidades Louvain{' — ' + title if title else ''}", fontsize=14, fontweight="bold")
+    ax.axis("off")
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.show()
+
+
+def plot_community_sizes(community_result: dict, title: str = "",
+                         save_path: Optional[str] = None):
+    """Plota distribuição de tamanhos de comunidades."""
+    sizes = community_result["community_sizes"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Top 15 comunidades
+    top_sizes = sizes[:15]
+    axes[0].bar(range(len(top_sizes)), top_sizes, color="#2196F3", alpha=0.8)
+    axes[0].set_xlabel("Comunidade (rank)")
+    axes[0].set_ylabel("Número de nós")
+    axes[0].set_title(f"Top 15 Comunidades{' — ' + title if title else ''}")
+
+    # Distribuição completa
+    axes[1].hist(sizes, bins=30, color="#FF5722", edgecolor="white", alpha=0.8)
+    axes[1].set_xlabel("Tamanho da comunidade")
+    axes[1].set_ylabel("Frequência")
+    axes[1].set_title(f"Distribuição de Tamanhos{' — ' + title if title else ''}")
+    axes[1].axvline(np.mean(sizes), color="red", linestyle="--",
+                    label=f"Média: {np.mean(sizes):.1f}")
+    axes[1].legend()
+
+    plt.suptitle(f"Modularity: {community_result['modularity']:.4f} | "
+                 f"{community_result['num_communities']} comunidades",
+                 fontsize=11, y=1.02)
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.show()
+
+
+# =============================================================================
 # Relatório Completo
 # =============================================================================
 
@@ -341,6 +470,7 @@ def full_analysis(graphs: dict[str, nx.Graph],
     
     all_metrics = {}
     all_centralities = {}
+    all_communities = {}
     
     for name, G in graphs.items():
         print(f"\n{'='*60}")
@@ -365,19 +495,33 @@ def full_analysis(graphs: dict[str, nx.Graph],
         for _, row in centralities.head(10).iterrows():
             print(f"    [{row['label']}] {row['node']} (grau: {row['degree']})")
         
+        # Comunidades
+        comm_result = detect_communities(G)
+        all_communities[name] = comm_result
+        print(f"\n  Comunidades: {comm_result['num_communities']} "
+              f"(modularity: {comm_result['modularity']:.4f})")
+        for i, c in enumerate(comm_result["top_communities"][:5]):
+            members_str = ", ".join(f"{n}({l})" for n, _, l in c["top_members"][:5])
+            print(f"    C{i}: {c['size']} nós — {members_str}")
+
         # Figuras individuais
-        plot_degree_distribution(G, title=name, 
+        plot_degree_distribution(G, title=name,
                                   save_path=f"{output_dir}/degree_dist_{name}.png")
-        plot_graph_visualization(G, title=name, 
+        plot_graph_visualization(G, title=name,
                                   save_path=f"{output_dir}/graph_viz_{name}.png")
-    
+        plot_communities(G, comm_result["partition"], title=name,
+                         save_path=f"{output_dir}/communities_{name}.png")
+        plot_community_sizes(comm_result, title=name,
+                             save_path=f"{output_dir}/community_sizes_{name}.png")
+
     # Comparações
-    plot_comparison_table(all_metrics, 
+    plot_comparison_table(all_metrics,
                            save_path=f"{output_dir}/comparison_table.png")
-    plot_centrality_comparison(all_centralities, 
+    plot_centrality_comparison(all_centralities,
                                 save_path=f"{output_dir}/centrality_comparison.png")
-    
-    return {"metrics": all_metrics, "centralities": all_centralities}
+
+    return {"metrics": all_metrics, "centralities": all_centralities,
+            "communities": all_communities}
 
 
 if __name__ == "__main__":
