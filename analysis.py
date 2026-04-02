@@ -19,6 +19,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from pyvis.network import Network
 
 
 # =============================================================================
@@ -450,6 +451,82 @@ def plot_community_sizes(community_result: dict, title: str = "",
 
 
 # =============================================================================
+# Visualização Interativa (pyvis)
+# =============================================================================
+
+def build_pyvis_graph(G: nx.Graph, partition: dict, title: str = "",
+                      max_nodes: int = 300, save_path: Optional[str] = None):
+    """
+    Gera visualização interativa do grafo com pyvis, colorido por comunidade.
+
+    Args:
+        G: Grafo NetworkX
+        partition: Dict nó → comunidade (Louvain)
+        title: Título da visualização
+        max_nodes: Limite de nós (pega os mais conectados)
+        save_path: Caminho do arquivo HTML de saída
+    """
+    # Subgrafo dos nós mais conectados
+    if G.number_of_nodes() > max_nodes:
+        top_nodes = sorted(G.degree(), key=lambda x: x[1], reverse=True)[:max_nodes]
+        nodes = [n for n, _ in top_nodes]
+    else:
+        nodes = list(G.nodes())
+
+    G_sub = G.subgraph(nodes).copy()
+
+    net = Network(height="800px", width="100%", bgcolor="#1a1a2e",
+                  font_color="white", notebook=False, select_menu=True,
+                  filter_menu=True, cdn_resources="remote")
+    net.barnes_hut(gravity=-3000, central_gravity=0.3, spring_length=150,
+                   spring_strength=0.01)
+
+    # Paleta de cores por comunidade
+    palette = [
+        "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
+        "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabed4",
+        "#469990", "#dcbeff", "#9A6324", "#fffac8", "#800000",
+        "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9",
+    ]
+    unique_comms = sorted(set(partition.get(n, 0) for n in G_sub.nodes()))
+    comm_colors = {c: palette[i % len(palette)] for i, c in enumerate(unique_comms)}
+
+    # Tipo de entidade → forma
+    label_map = {
+        "LIB": "dot", "TECH": "diamond", "CLASS": "triangle",
+        "FUNC": "square", "ORG": "star", "PER": "triangleDown",
+        "LOC": "hexagon", "MISC": "dot",
+    }
+
+    degrees = dict(G_sub.degree())
+
+    for node in G_sub.nodes():
+        comm = partition.get(node, 0)
+        label = G_sub.nodes[node].get("label", "?")
+        count = G_sub.nodes[node].get("count", 0)
+        deg = degrees[node]
+        size = max(8, min(deg * 0.8, 60))
+
+        net.add_node(
+            node,
+            label=node,
+            title=f"{node}\nTipo: {label}\nGrau: {deg}\nComunidade: {comm}\nContagem: {count}",
+            color=comm_colors.get(comm, "#999999"),
+            size=size,
+            shape=label_map.get(label, "dot"),
+            group=str(comm),
+        )
+
+    for u, v, data in G_sub.edges(data=True):
+        weight = data.get("weight", 1)
+        net.add_edge(u, v, value=weight, title=f"Peso: {weight}")
+
+    if save_path:
+        net.save_graph(save_path)
+        print(f"🌐 Visualização interativa salva em: {save_path}")
+
+
+# =============================================================================
 # Relatório Completo
 # =============================================================================
 
@@ -513,6 +590,11 @@ def full_analysis(graphs: dict[str, nx.Graph],
                          save_path=f"{output_dir}/communities_{name}.png")
         plot_community_sizes(comm_result, title=name,
                              save_path=f"{output_dir}/community_sizes_{name}.png")
+
+        # Visualização interativa (pyvis)
+        build_pyvis_graph(G, comm_result["partition"], title=name,
+                          max_nodes=300,
+                          save_path=f"{output_dir}/interactive_{name}.html")
 
     # Comparações
     plot_comparison_table(all_metrics,
