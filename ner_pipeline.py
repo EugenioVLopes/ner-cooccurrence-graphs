@@ -149,6 +149,14 @@ def _is_noise(text: str) -> bool:
     if len(t) < 3:
         return True
 
+    # Muito longo (base64, blobs encodados, hashes)
+    if len(t) > 80:
+        return True
+
+    # String sem espaço e longa demais para ser nome de entidade
+    if " " not in t and len(t) > 40:
+        return True
+
     # Número puro ou HTTP status code
     if t.replace("-", "").replace(".", "").replace(",", "").isdigit():
         return True
