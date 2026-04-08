@@ -55,48 +55,75 @@ e palavras de 2 letras (`to`, `is`, `on`, `in`).
 O padrão `function nome` agora rejeita nomes com <= 2 caracteres e nomes
 presentes no STOPWORDS.
 
+### 5. Filtro de prefixos em português
+
+O extractor gera descrições como `"Função getSkills"` e `"Parâmetros FpsMetrics"`.
+O spaCy interpretava essas frases como entidades (ORG/PER). Adicionado filtro
+para rejeitar entidades que começam com `função`, `parâmetros`, `classe`, `método`
+ou `retorna`.
+
+### 6. Restrição do regex CamelCase
+
+O padrão que capturava qualquer `PascalCase` como CLASS gerava milhares de nós
+para classes internas sem valor semântico (`ProcessUserInputBaseResult`,
+`FilterToolProgressMessages`). Agora só captura CamelCase precedido por
+palavras-chave de declaração: `class`, `interface`, `type`, `extends`,
+`implements`, `new`, `import`.
+
+### 7. Remoção de ilhas (componentes pequenos)
+
+Adicionado `min_component_size=3` ao `CoOccurrenceConfig` no `graph_builder.py`.
+Componentes conectados com menos de 3 nós são removidos do grafo, eliminando
+pares isolados que não contribuem para a análise de co-ocorrência.
+
 ## Comparação de métricas
 
 ### Tamanho dos grafos
 
 | Granularidade | Nós (05) | Nós (06) | Arestas (05) | Arestas (06) |
 | --- | --- | --- | --- | --- |
-| Sentença | 5.791 | 5.192 (-10%) | 5.947 | 5.118 (-14%) |
-| Parágrafo | 7.746 | 6.644 (-14%) | 22.552 | 15.480 (-31%) |
-| K-chars (500) | 7.845 | 6.742 (-14%) | 15.160 | 12.167 (-20%) |
+| Sentença | 5.791 | 1.907 (-67%) | 5.947 | 2.748 (-54%) |
+| Parágrafo | 7.746 | 3.163 (-59%) | 22.552 | 9.211 (-59%) |
+| K-chars (500) | 7.845 | 3.156 (-60%) | 15.160 | 6.926 (-54%) |
 
-A redução de ~31% nas arestas do parágrafo indica que muitas co-ocorrências
-eram entre entidades legítimas e nós de ruído, inflando artificialmente a
-conectividade.
+A redução drástica se deve a três fatores combinados: filtragem de ruído do
+spaCy, restrição do CamelCase, e remoção de componentes pequenos. As entidades
+restantes são semanticamente relevantes.
 
 ### Métricas gerais (parágrafo)
 
 | Métrica | 05 (com ruído) | 06 (filtrado) |
 | --- | --- | --- |
-| Nós | 7.746 | 6.644 |
-| Arestas | 22.552 | 15.480 |
-| Densidade | 0,0008 | 0,0007 |
-| Diâmetro | — | 12 |
-| Caminho médio | — | 3,97 |
-| Clustering médio | — | 0,3663 |
-| Transitividade | — | 0,1868 |
-| Componentes | — | 1.220 |
-| Maior componente | — | 3.809 (57%) |
+| Nós | 7.746 | 3.163 |
+| Arestas | 22.552 | 9.211 |
+| Densidade | 0,0008 | 0,0018 |
+| Diâmetro | — | 11 |
+| Caminho médio | — | 3,71 |
+| Clustering médio | — | 0,5253 |
+| Transitividade | — | 0,1446 |
+| Componentes | — | 121 |
+| Maior componente | — | 2.664 (84%) |
+
+Destaques:
+- **Densidade dobrou** (0,0008 → 0,0018): grafo mais conectado sem ruído
+- **Clustering subiu** (→ 0,53): vizinhança dos nós é mais coesa
+- **Maior componente cobre 84%** do grafo (vs ~57% antes)
+- **Apenas 121 componentes** (vs ~1.200 antes)
 
 ### Top 10 entidades (parágrafo)
 
 | Entidade | Tipo | Grau |
 | --- | --- | --- |
-| claude | LIB | 558 |
-| api | TECH | 449 |
-| git | TECH | 333 |
-| mcp | TECH | 319 |
-| anthropic | LIB | 245 |
-| oauth | TECH | 229 |
-| cli | TECH | 223 |
-| windows | TECH | 219 |
-| github | TECH | 204 |
-| macos | TECH | 156 |
+| claude | LIB | 496 |
+| api | TECH | 400 |
+| git | TECH | 296 |
+| mcp | TECH | 266 |
+| oauth | TECH | 204 |
+| windows | TECH | 195 |
+| cli | TECH | 191 |
+| anthropic | LIB | 189 |
+| github | TECH | 183 |
+| macos | TECH | 145 |
 
 Nota: `cli` e `bash` agora aparecem corretamente como TECH em vez de ORG/PER.
 
@@ -104,11 +131,11 @@ Nota: `cli` e `bash` agora aparecem corretamente como TECH em vez de ORG/PER.
 
 | Comunidade | Nós | Tema | Membros principais |
 | --- | --- | --- | --- |
-| C0 | 964 | Core (API + auth + MCP) | claude, api, mcp, oauth, cli |
-| C1 | 306 | Cross-platform / OS | windows, macos, linux, powershell |
-| C2 | 305 | UI rendering | ink, ScrollBox, DOM, SGR |
-| C3 | 294 | State e tools | AppState, AbortSignal, ToolUseContext |
-| C4 | 273 | Git e integrações | git, github, bash, BashTool |
+| C0 | 432 | Git e cross-platform | git, windows, powershell, github, macos |
+| C1 | 428 | Core CLI + MCP | claude, mcp, cli, repl, lsp |
+| C2 | 282 | Autenticação | oauth, growthbook, ttl, jwt, ccr |
+| C3 | 281 | API e linguagens | api, anthropic, python, javascript |
+| C4 | 267 | UI rendering | ink, react, scrollbox, chalk, sgr |
 
 ## Análise
 
@@ -119,8 +146,10 @@ A remoção de ruído melhorou significativamente a qualidade:
 - **Comunidades mais coerentes**: sem nós de lixo misturados nos clusters
 - **Centralidades mais confiáveis**: as entidades mais centrais são todas
   semanticamente relevantes (claude, api, git, mcp, anthropic)
-- **Densidade mais realista**: a redução de 31% nas arestas do parágrafo
-  mostra que a conectividade estava inflada por fragmentos de código
+- **Grafo mais denso e conexo**: remoção de ilhas resultou em 84% dos nós
+  no componente principal (vs ~57% antes)
+- **Clustering alto** (0,53): indica que vizinhos tendem a estar conectados
+  entre si — estrutura de comunidades real, não artefato
 
 ### Limitações remanescentes
 

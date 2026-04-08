@@ -173,6 +173,14 @@ def _is_noise(text: str) -> bool:
     if "\n" in t:
         return True
 
+    # Prefixo em português vindo do extractor ("função X", "parâmetros X")
+    if re.match(r"^(função|parâmetros|classe|método|retorna)\s", t, re.IGNORECASE):
+        return True
+
+    # Expressões temporais ("4 minutes", "10 min", "5 minute")
+    if re.match(r"^\d+\s*(minutes?|hours?|seconds?|days?|min|sec|hrs?)\b", t):
+        return True
+
     return False
 
 
@@ -230,12 +238,16 @@ def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
                 ))
 
     # 6. CamelCase como possíveis classes/tipos
+    #    Somente captura se precedido por contexto de declaração/uso
     camelcase_ignore = {
         "TypeError", "ValueError", "KeyError", "IndexError",
         "RangeError", "SyntaxError", "ReferenceError",
         "PowerShell", "JavaScript", "TypeScript",
     }
-    for match in re.finditer(r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b', text):
+    for match in re.finditer(
+        r'(?:class|interface|type|extends|implements|new|import)\s+'
+        r'([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b', text
+    ):
         name = match.group(1)
         if name not in camelcase_ignore and name.lower() not in STOPWORDS:
             entities.append(Entity(

@@ -24,6 +24,7 @@ class CoOccurrenceConfig:
     granularity: str = "sentence"  # 'sentence', 'paragraph', 'k_chars'
     k_chars: int = 500  # tamanho da janela para k_chars
     min_weight: int = 1  # peso mínimo para incluir aresta
+    min_component_size: int = 3  # tamanho mínimo de componente conectado
     normalize_names: bool = True  # normalizar nomes das entidades
 
 
@@ -126,9 +127,16 @@ def build_cooccurrence_graph(
         ]
         G.remove_edges_from(edges_to_remove)
 
-    # Remover nós isolados após filtragem
-    isolated = list(nx.isolates(G))
-    G.remove_nodes_from(isolated)
+    # Remover componentes pequenos (ilhas)
+    if config.min_component_size > 1:
+        small_nodes = []
+        for comp in nx.connected_components(G):
+            if len(comp) < config.min_component_size:
+                small_nodes.extend(comp)
+        G.remove_nodes_from(small_nodes)
+    else:
+        # Apenas remover nós isolados
+        G.remove_nodes_from(list(nx.isolates(G)))
 
     # Converter sets para listas para serialização
     for node in G.nodes:
