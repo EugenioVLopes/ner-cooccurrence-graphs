@@ -93,7 +93,87 @@ STOPWORDS = {
     "new", "old", "last", "top", "set", "get", "use", "run",
     "true", "false", "yes", "no", "ok", "sdk",
     "max", "min", "default", "none", "all", "key", "value", "type",
+    "to", "is", "on", "in", "so", "of", "at", "do", "if", "or", "an",
+    # palavras numéricas e temporais
+    "zero", "non-zero", "four", "five", "six", "seven", "eight", "nine",
+    "ten", "half", "third", "fourth", "double", "single", "once", "twice",
+    "hourly", "daily", "weekly", "monthly",
+    # tags de comentário
+    "todo", "fixme", "hack", "note", "bug", "feat", "docs", "chore",
+    # termos genéricos que não são entidades
+    "remote control", "status code", "exit code", "error message",
+    "best", "worst", "post", "falls",
 }
+
+# Caracteres que indicam fragmento de código (não entidade)
+CODE_CHARS = set("&|={}<>()$`~^;")
+
+# Regex para detectar fragmentos de código
+_CODE_FRAGMENT_RE = re.compile(
+    r"&&|"          # operador lógico
+    r"\|\||"        # operador lógico
+    r"=>|"          # arrow function
+    r"\$\{|"        # template literal
+    r"\.\w+\(|"     # method call (ex: date.now()
+    r"^\s*//|"      # comentário
+    r"import\(|"    # dynamic import
+    r"\.js\b|"      # extensão de arquivo
+    r"\.ts\b|"      # extensão de arquivo
+    r"startswith\(|"
+    r"\.join\b|"
+    r"\.length\b|"
+    r"\.has\b|"
+    r"const\s|"     # declaração JS
+    r"\.write\b"
+)
+
+# Siglas tech que spaCy classifica erroneamente como ORG
+TECH_RECLASSIFY = {
+    "json", "xml", "yaml", "toml", "csv", "html", "css",
+    "tsx", "jsx", "sql", "cli", "sse", "ttl", "uuid",
+    "auth", "repl", "lsp", "wsl", "cse", "ccr",
+}
+
+# Ferramentas/comandos que spaCy classifica como PER
+TOOL_RECLASSIFY = {
+    "bash", "curl", "grep", "sed", "awk", "cat", "echo",
+    "npm", "node", "yarn", "pnpm", "cap", "jsonl",
+}
+
+
+def _is_noise(text: str) -> bool:
+    """Retorna True se o texto parece ser ruído (fragmento de código, número, etc.)."""
+    t = text.strip()
+
+    # Muito curto
+    if len(t) < 3:
+        return True
+
+    # Número puro ou HTTP status code
+    if t.replace("-", "").replace(".", "").replace(",", "").isdigit():
+        return True
+
+    # Padrões numéricos com unidades (15s, 300s, 60_000, 10 min)
+    if re.match(r"^[\d_.]+\s*[a-z]{0,3}$", t):
+        return True
+
+    # Contém caracteres de código
+    if CODE_CHARS & set(t):
+        return True
+
+    # Parece fragmento de código
+    if _CODE_FRAGMENT_RE.search(t):
+        return True
+
+    # Começa ou termina com pontuação incomum
+    if t.startswith(("//", "/*", "#", "~:", "≈")):
+        return True
+
+    # Contém newline (entidade multi-linha = lixo do spaCy)
+    if "\n" in t:
+        return True
+
+    return False
 
 
 def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
@@ -125,10 +205,11 @@ def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
     # 3. Funções: "function nome" ou "Função nome"
     for match in re.finditer(r'(?:function|[Ff]unção)\s+([a-zA-Z_][a-zA-Z0-9_]+)', text):
         name = match.group(1)
-        entities.append(Entity(
-            text=name, label="FUNC", source_file=source_file,
-            start=match.start(), end=match.end()
-        ))
+        if name.lower() not in STOPWORDS and len(name) > 2:
+            entities.append(Entity(
+                text=name, label="FUNC", source_file=source_file,
+                start=match.start(), end=match.end()
+            ))
 
     # 4. Bibliotecas conhecidas mencionadas no texto
     for lib in KNOWN_LIBRARIES:
@@ -168,6 +249,7 @@ def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
 def extract_spacy_entities(text: str, nlp, source_file: str = "") -> list[Entity]:
     """
     Extrai entidades usando spaCy (PER, ORG, LOC, MISC).
+    Aplica filtros de ruído e reclassificação de entidades técnicas.
     """
     doc = nlp(text)
     entities = []
@@ -182,16 +264,32 @@ def extract_spacy_entities(text: str, nlp, source_file: str = "") -> list[Entity
     }
 
     for ent in doc.ents:
-        label = label_map.get(ent.label_, "MISC")
         clean = ent.text.strip()
-        if len(clean) > 2 and clean.lower() not in STOPWORDS:
-            entities.append(Entity(
-                text=clean,
-                label=label,
-                source_file=source_file,
-                start=ent.start_char,
-                end=ent.end_char,
-            ))
+        lower = clean.lower()
+
+        # Filtros de ruído
+        if lower in STOPWORDS:
+            continue
+        if _is_noise(clean):
+            continue
+
+        label = label_map.get(ent.label_, "MISC")
+
+        # Reclassificar siglas tech que spaCy marca como ORG
+        if label == "ORG" and lower in TECH_RECLASSIFY:
+            label = "TECH"
+
+        # Reclassificar ferramentas que spaCy marca como PER
+        if label == "PER" and lower in TOOL_RECLASSIFY:
+            label = "TECH"
+
+        entities.append(Entity(
+            text=clean,
+            label=label,
+            source_file=source_file,
+            start=ent.start_char,
+            end=ent.end_char,
+        ))
 
     return entities
 
