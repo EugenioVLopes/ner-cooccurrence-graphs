@@ -70,7 +70,14 @@ para classes internas sem valor semântico (`ProcessUserInputBaseResult`,
 palavras-chave de declaração: `class`, `interface`, `type`, `extends`,
 `implements`, `new`, `import`.
 
-### 7. Remoção de ilhas (componentes pequenos)
+### 7. Filtro de tamanho máximo
+
+Entidades com mais de 80 caracteres ou palavras únicas com mais de 40
+caracteres são rejeitadas. Remove strings base64-encoded (até 46k caracteres)
+que o spaCy classificava como entidades a partir de snapshots binários no
+repositório.
+
+### 8. Remoção de ilhas (componentes pequenos)
 
 Adicionado `min_component_size=3` ao `CoOccurrenceConfig` no `graph_builder.py`.
 Componentes conectados com menos de 3 nós são removidos do grafo, eliminando
@@ -82,9 +89,9 @@ pares isolados que não contribuem para a análise de co-ocorrência.
 
 | Granularidade | Nós (05) | Nós (06) | Arestas (05) | Arestas (06) |
 | --- | --- | --- | --- | --- |
-| Sentença | 5.791 | 1.907 (-67%) | 5.947 | 2.748 (-54%) |
-| Parágrafo | 7.746 | 3.163 (-59%) | 22.552 | 9.211 (-59%) |
-| K-chars (500) | 7.845 | 3.156 (-60%) | 15.160 | 6.926 (-54%) |
+| Sentença | 5.791 | 1.887 (-67%) | 5.947 | 2.696 (-55%) |
+| Parágrafo | 7.746 | 3.132 (-60%) | 22.552 | 9.109 (-60%) |
+| K-chars (500) | 7.845 | 3.145 (-60%) | 15.160 | 6.899 (-54%) |
 
 A redução drástica se deve a três fatores combinados: filtragem de ruído do
 spaCy, restrição do CamelCase, e remoção de componentes pequenos. As entidades
@@ -94,15 +101,15 @@ restantes são semanticamente relevantes.
 
 | Métrica | 05 (com ruído) | 06 (filtrado) |
 | --- | --- | --- |
-| Nós | 7.746 | 3.163 |
-| Arestas | 22.552 | 9.211 |
-| Densidade | 0,0008 | 0,0018 |
+| Nós | 7.746 | 3.132 |
+| Arestas | 22.552 | 9.109 |
+| Densidade | 0,0008 | 0,0019 |
 | Diâmetro | — | 11 |
 | Caminho médio | — | 3,71 |
-| Clustering médio | — | 0,5253 |
-| Transitividade | — | 0,1446 |
-| Componentes | — | 121 |
-| Maior componente | — | 2.664 (84%) |
+| Clustering médio | — | 0,53 |
+| Transitividade | — | 0,14 |
+| Componentes | — | ~120 |
+| Maior componente | — | ~84% |
 
 Destaques:
 - **Densidade dobrou** (0,0008 → 0,0018): grafo mais conectado sem ruído
