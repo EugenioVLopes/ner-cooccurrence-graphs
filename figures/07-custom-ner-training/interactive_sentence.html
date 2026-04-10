@@ -1,0 +1,1253 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #1a1a2e;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 800px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="computerusesessioncontext">computerusesessioncontext</option>
+                                
+                                    <option value="python">python</option>
+                                
+                                    <option value="vscode">vscode</option>
+                                
+                                    <option value="vertex">vertex</option>
+                                
+                                    <option value="ascii">ascii</option>
+                                
+                                    <option value="ghostty">ghostty</option>
+                                
+                                    <option value="costusd">costusd</option>
+                                
+                                    <option value="sdk mcp">sdk mcp</option>
+                                
+                                    <option value="bitbucket, github api">bitbucket, github api</option>
+                                
+                                    <option value="lsp">lsp</option>
+                                
+                                    <option value="api">api</option>
+                                
+                                    <option value="pastedcontent">pastedcontent</option>
+                                
+                                    <option value="dce">dce</option>
+                                
+                                    <option value="fallback">fallback</option>
+                                
+                                    <option value="opentelemetry">opentelemetry</option>
+                                
+                                    <option value="maxbytes">maxbytes</option>
+                                
+                                    <option value="dailymodeltokens">dailymodeltokens</option>
+                                
+                                    <option value="useimperativehandle">useimperativehandle</option>
+                                
+                                    <option value="dcs">dcs</option>
+                                
+                                    <option value="tooluseresult">tooluseresult</option>
+                                
+                                    <option value="accesstoken">accesstoken</option>
+                                
+                                    <option value="scrolltop">scrolltop</option>
+                                
+                                    <option value="github/gitlab">github/gitlab</option>
+                                
+                                    <option value="cli">cli</option>
+                                
+                                    <option value="iterm2">iterm2</option>
+                                
+                                    <option value="csi u / kitty">csi u / kitty</option>
+                                
+                                    <option value="normalizedmessage">normalizedmessage</option>
+                                
+                                    <option value="bitbucket">bitbucket</option>
+                                
+                                    <option value="onitemclick">onitemclick</option>
+                                
+                                    <option value="-js">-js</option>
+                                
+                                    <option value="id_token">id_token</option>
+                                
+                                    <option value="lrucache">lrucache</option>
+                                
+                                    <option value="websocket">websocket</option>
+                                
+                                    <option value="hooks">hooks</option>
+                                
+                                    <option value="channelentry">channelentry</option>
+                                
+                                    <option value="posix">posix</option>
+                                
+                                    <option value="commandbase">commandbase</option>
+                                
+                                    <option value="-ai">-ai</option>
+                                
+                                    <option value="grove">grove</option>
+                                
+                                    <option value="mcp client">mcp client</option>
+                                
+                                    <option value="mac">mac</option>
+                                
+                                    <option value="normalizes">normalizes</option>
+                                
+                                    <option value="javascript">javascript</option>
+                                
+                                    <option value="eperm">eperm</option>
+                                
+                                    <option value="github">github</option>
+                                
+                                    <option value="claude desktop">claude desktop</option>
+                                
+                                    <option value="dom">dom</option>
+                                
+                                    <option value="flexbox">flexbox</option>
+                                
+                                    <option value="jwt">jwt</option>
+                                
+                                    <option value="compute">compute</option>
+                                
+                                    <option value="claude ssh">claude ssh</option>
+                                
+                                    <option value="renderitem">renderitem</option>
+                                
+                                    <option value="claude_code_oauth_token">claude_code_oauth_token</option>
+                                
+                                    <option value="applescript">applescript</option>
+                                
+                                    <option value="nest">nest</option>
+                                
+                                    <option value="messageactionsnav">messageactionsnav</option>
+                                
+                                    <option value="alsa">alsa</option>
+                                
+                                    <option value="refobject">refobject</option>
+                                
+                                    <option value="for">for</option>
+                                
+                                    <option value="numallowedtools">numallowedtools</option>
+                                
+                                    <option value="react">react</option>
+                                
+                                    <option value="memoized">memoized</option>
+                                
+                                    <option value="payg">payg</option>
+                                
+                                    <option value="progressmessage">progressmessage</option>
+                                
+                                    <option value="sync">sync</option>
+                                
+                                    <option value="usestdin">usestdin</option>
+                                
+                                    <option value="ref">ref</option>
+                                
+                                    <option value="messagetype">messagetype</option>
+                                
+                                    <option value="messageactionskeybindings">messageactionskeybindings</option>
+                                
+                                    <option value="scriptblock">scriptblock</option>
+                                
+                                    <option value="tsx">tsx</option>
+                                
+                                    <option value="/usr">/usr</option>
+                                
+                                    <option value="maxtokens">maxtokens</option>
+                                
+                                    <option value="usecallback">usecallback</option>
+                                
+                                    <option value="unc">unc</option>
+                                
+                                    <option value="command">command</option>
+                                
+                                    <option value="scrollbox">scrollbox</option>
+                                
+                                    <option value="agenttool">agenttool</option>
+                                
+                                    <option value="cursor">cursor</option>
+                                
+                                    <option value="parâmetros">parâmetros</option>
+                                
+                                    <option value="lspservers">lspservers</option>
+                                
+                                    <option value="messageactionsstate">messageactionsstate</option>
+                                
+                                    <option value="setpositions">setpositions</option>
+                                
+                                    <option value="anthropic-ai">anthropic-ai</option>
+                                
+                                    <option value="cupermissionrequest">cupermissionrequest</option>
+                                
+                                    <option value="lodash">lodash</option>
+                                
+                                    <option value="macos/linux">macos/linux</option>
+                                
+                                    <option value="eslint">eslint</option>
+                                
+                                    <option value="varscope">varscope</option>
+                                
+                                    <option value="warp">warp</option>
+                                
+                                    <option value="assistantmessage">assistantmessage</option>
+                                
+                                    <option value="mcpclients">mcpclients</option>
+                                
+                                    <option value="homebrew">homebrew</option>
+                                
+                                    <option value="mcpclientcount">mcpclientcount</option>
+                                
+                                    <option value="setcursor">setcursor</option>
+                                
+                                    <option value="argv0">argv0</option>
+                                
+                                    <option value="linux/macos">linux/macos</option>
+                                
+                                    <option value="llmspan">llmspan</option>
+                                
+                                    <option value="sse">sse</option>
+                                
+                                    <option value="promptinput">promptinput</option>
+                                
+                                    <option value="mark">mark</option>
+                                
+                                    <option value="darwin">darwin</option>
+                                
+                                    <option value="setkairosactive">setkairosactive</option>
+                                
+                                    <option value="clientoptions">clientoptions</option>
+                                
+                                    <option value="gnu">gnu</option>
+                                
+                                    <option value="foundry">foundry</option>
+                                
+                                    <option value="microsoft">microsoft</option>
+                                
+                                    <option value="sighup">sighup</option>
+                                
+                                    <option value="linux/windows">linux/windows</option>
+                                
+                                    <option value="rgb">rgb</option>
+                                
+                                    <option value="byoc">byoc</option>
+                                
+                                    <option value="scopedmcpserverconfig">scopedmcpserverconfig</option>
+                                
+                                    <option value="skill">skill</option>
+                                
+                                    <option value="messagesforapi">messagesforapi</option>
+                                
+                                    <option value="zod">zod</option>
+                                
+                                    <option value="lodash-es">lodash-es</option>
+                                
+                                    <option value="canusetool">canusetool</option>
+                                
+                                    <option value="themeprovider">themeprovider</option>
+                                
+                                    <option value="mcp">mcp</option>
+                                
+                                    <option value="google-auth-library">google-auth-library</option>
+                                
+                                    <option value="hasstdin">hasstdin</option>
+                                
+                                    <option value="aws">aws</option>
+                                
+                                    <option value="esc">esc</option>
+                                
+                                    <option value="biome">biome</option>
+                                
+                                    <option value="getbranch">getbranch</option>
+                                
+                                    <option value="globalcachestrategy, requestsetupms">globalcachestrategy, requestsetupms</option>
+                                
+                                    <option value="typescript">typescript</option>
+                                
+                                    <option value="axios">axios</option>
+                                
+                                    <option value="chrome">chrome</option>
+                                
+                                    <option value="pacman">pacman</option>
+                                
+                                    <option value="wsl">wsl</option>
+                                
+                                    <option value="appstate">appstate</option>
+                                
+                                    <option value="sandbox">sandbox</option>
+                                
+                                    <option value="oldcontent">oldcontent</option>
+                                
+                                    <option value="oauth">oauth</option>
+                                
+                                    <option value="da1">da1</option>
+                                
+                                    <option value="startkeychainprefetch">startkeychainprefetch</option>
+                                
+                                    <option value="opus">opus</option>
+                                
+                                    <option value="terminal">terminal</option>
+                                
+                                    <option value="bigquery">bigquery</option>
+                                
+                                    <option value="usestate">usestate</option>
+                                
+                                    <option value="gitlab api">gitlab api</option>
+                                
+                                    <option value="dns">dns</option>
+                                
+                                    <option value="claude mcp">claude mcp</option>
+                                
+                                    <option value="screenshotdims">screenshotdims</option>
+                                
+                                    <option value="apierror">apierror</option>
+                                
+                                    <option value="@param mcptools">@param mcptools</option>
+                                
+                                    <option value="usedeferredvalue">usedeferredvalue</option>
+                                
+                                    <option value="usekeybindings">usekeybindings</option>
+                                
+                                    <option value="setinlineplugins">setinlineplugins</option>
+                                
+                                    <option value="wsl1">wsl1</option>
+                                
+                                    <option value="repl">repl</option>
+                                
+                                    <option value="kitty">kitty</option>
+                                
+                                    <option value="buffer">buffer</option>
+                                
+                                    <option value="replbridge">replbridge</option>
+                                
+                                    <option value="stringconstant">stringconstant</option>
+                                
+                                    <option value="slack">slack</option>
+                                
+                                    <option value="systemmessage">systemmessage</option>
+                                
+                                    <option value="serverresource">serverresource</option>
+                                
+                                    <option value="messageactioncaps">messageactioncaps</option>
+                                
+                                    <option value="ccd">ccd</option>
+                                
+                                    <option value="mcp http">mcp http</option>
+                                
+                                    <option value="ansi">ansi</option>
+                                
+                                    <option value="commander">commander</option>
+                                
+                                    <option value="connectortextblockcount">connectortextblockcount</option>
+                                
+                                    <option value="ink">ink</option>
+                                
+                                    <option value="tcc">tcc</option>
+                                
+                                    <option value="setsessionsource">setsessionsource</option>
+                                
+                                    <option value="usermessage">usermessage</option>
+                                
+                                    <option value="filter">filter</option>
+                                
+                                    <option value="shift+tab">shift+tab</option>
+                                
+                                    <option value="allowlist">allowlist</option>
+                                
+                                    <option value="thinkingblockparam">thinkingblockparam</option>
+                                
+                                    <option value="idp">idp</option>
+                                
+                                    <option value="ttl">ttl</option>
+                                
+                                    <option value="cupermissionresponse">cupermissionresponse</option>
+                                
+                                    <option value="iterm">iterm</option>
+                                
+                                    <option value="utc">utc</option>
+                                
+                                    <option value="uri">uri</option>
+                                
+                                    <option value="growthbook">growthbook</option>
+                                
+                                    <option value="uuid">uuid</option>
+                                
+                                    <option value="commandresultdisplay">commandresultdisplay</option>
+                                
+                                    <option value="shell">shell</option>
+                                
+                                    <option value="drow">drow</option>
+                                
+                                    <option value="token">token</option>
+                                
+                                    <option value="claude cli">claude cli</option>
+                                
+                                    <option value="queued">queued</option>
+                                
+                                    <option value="attachmentmessage">attachmentmessage</option>
+                                
+                                    <option value="rpc">rpc</option>
+                                
+                                    <option value="macos">macos</option>
+                                
+                                    <option value="env var">env var</option>
+                                
+                                    <option value="ntfs">ntfs</option>
+                                
+                                    <option value="cachedir">cachedir</option>
+                                
+                                    <option value="taskstate">taskstate</option>
+                                
+                                    <option value="rust">rust</option>
+                                
+                                    <option value="sigint">sigint</option>
+                                
+                                    <option value="promise">promise</option>
+                                
+                                    <option value="auth">auth</option>
+                                
+                                    <option value="bashtool">bashtool</option>
+                                
+                                    <option value="java mcp sdk">java mcp sdk</option>
+                                
+                                    <option value="that">that</option>
+                                
+                                    <option value="suffix">suffix</option>
+                                
+                                    <option value="idpissuer">idpissuer</option>
+                                
+                                    <option value="usecontext">usecontext</option>
+                                
+                                    <option value="ide">ide</option>
+                                
+                                    <option value="utf-8">utf-8</option>
+                                
+                                    <option value="sigkill">sigkill</option>
+                                
+                                    <option value="contentblockparam">contentblockparam</option>
+                                
+                                    <option value="json">json</option>
+                                
+                                    <option value="useeffect">useeffect</option>
+                                
+                                    <option value="renderablemessage">renderablemessage</option>
+                                
+                                    <option value="_temp4">_temp4</option>
+                                
+                                    <option value="als">als</option>
+                                
+                                    <option value="buf">buf</option>
+                                
+                                    <option value="setclienttype">setclienttype</option>
+                                
+                                    <option value="messageactionsbar">messageactionsbar</option>
+                                
+                                    <option value="eol">eol</option>
+                                
+                                    <option value="toolresultblockparam">toolresultblockparam</option>
+                                
+                                    <option value="invalidargumenterror">invalidargumenterror</option>
+                                
+                                    <option value="previousrequestid">previousrequestid</option>
+                                
+                                    <option value="sigterm">sigterm</option>
+                                
+                                    <option value="childprocess">childprocess</option>
+                                
+                                    <option value="ntlm">ntlm</option>
+                                
+                                    <option value="useinput">useinput</option>
+                                
+                                    <option value="task">task</option>
+                                
+                                    <option value="jsonl">jsonl</option>
+                                
+                                    <option value="cursornavref">cursornavref</option>
+                                
+                                    <option value="non-anthropic">non-anthropic</option>
+                                
+                                    <option value="node">node</option>
+                                
+                                    <option value="jsonrpc">jsonrpc</option>
+                                
+                                    <option value="windsurf">windsurf</option>
+                                
+                                    <option value="commander-js">commander-js</option>
+                                
+                                    <option value="sox">sox</option>
+                                
+                                    <option value="convert">convert</option>
+                                
+                                    <option value="cucalltoolresult">cucalltoolresult</option>
+                                
+                                    <option value="windows">windows</option>
+                                
+                                    <option value="systempromptflag">systempromptflag</option>
+                                
+                                    <option value="pii">pii</option>
+                                
+                                    <option value="llm">llm</option>
+                                
+                                    <option value="mcptools">mcptools</option>
+                                
+                                    <option value="plugin@marketplace">plugin@marketplace</option>
+                                
+                                    <option value="closestream">closestream</option>
+                                
+                                    <option value="powershell">powershell</option>
+                                
+                                    <option value="rest">rest</option>
+                                
+                                    <option value="wezterm">wezterm</option>
+                                
+                                    <option value="http://">http://</option>
+                                
+                                    <option value="ant">ant</option>
+                                
+                                    <option value="setallowedchannels">setallowedchannels</option>
+                                
+                                    <option value="claudecodeinternalevent">claudecodeinternalevent</option>
+                                
+                                    <option value="getusermsgoptin">getusermsgoptin</option>
+                                
+                                    <option value="anthropic">anthropic</option>
+                                
+                                    <option value="promptcommand">promptcommand</option>
+                                
+                                    <option value="readme">readme</option>
+                                
+                                    <option value="dir">dir</option>
+                                
+                                    <option value="maxwidth">maxwidth</option>
+                                
+                                    <option value="textstyle">textstyle</option>
+                                
+                                    <option value="xaa">xaa</option>
+                                
+                                    <option value="taskoutput">taskoutput</option>
+                                
+                                    <option value="textblockparam">textblockparam</option>
+                                
+                                    <option value="gcs">gcs</option>
+                                
+                                    <option value="claude">claude</option>
+                                
+                                    <option value="tls">tls</option>
+                                
+                                    <option value="non-github">non-github</option>
+                                
+                                    <option value="reactnode">reactnode</option>
+                                
+                                    <option value="linux">linux</option>
+                                
+                                    <option value="maxlength">maxlength</option>
+                                
+                                    <option value="csi">csi</option>
+                                
+                                    <option value="hookmatcher">hookmatcher</option>
+                                
+                                    <option value="mcp sdk">mcp sdk</option>
+                                
+                                    <option value="tasklistid">tasklistid</option>
+                                
+                                    <option value="delta">delta</option>
+                                
+                                    <option value="jetbrains">jetbrains</option>
+                                
+                                    <option value="statsig">statsig</option>
+                                
+                                    <option value="onimagepaste">onimagepaste</option>
+                                
+                                    <option value="setappstate">setappstate</option>
+                                
+                                    <option value="@param">@param</option>
+                                
+                                    <option value="prm">prm</option>
+                                
+                                    <option value="datadog">datadog</option>
+                                
+                                    <option value="sgr">sgr</option>
+                                
+                                    <option value="tooluseid">tooluseid</option>
+                                
+                                    <option value="git">git</option>
+                                
+                                    <option value="adc">adc</option>
+                                
+                                    <option value="domelement">domelement</option>
+                                
+                                    <option value="gitlab">gitlab</option>
+                                
+                                    <option value="prenormalizedmodel">prenormalizedmodel</option>
+                                
+                                    <option value="googleauth">googleauth</option>
+                                
+                                    <option value="pid">pid</option>
+                                
+                                    <option value="pluginmanifest">pluginmanifest</option>
+                                
+                                    <option value="alacritty">alacritty</option>
+                                
+                                    <option value="bash">bash</option>
+                                
+                                    <option value="spring ai">spring ai</option>
+                                
+                                    <option value="setmessages">setmessages</option>
+                                
+                                    <option value="microtask">microtask</option>
+                                
+                                    <option value="cse">cse</option>
+                                
+                                    <option value="java">java</option>
+                                
+                                    <option value="docker">docker</option>
+                                
+                                    <option value="https://github">https://github</option>
+                                
+                                    <option value="vcs">vcs</option>
+                                
+                                    <option value="map">map</option>
+                                
+                                    <option value="ccr">ccr</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+              <div id="filter-menu" class="card-header">
+                <div class="row no-gutters">
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'item')"
+                            id="select-item"
+                        >
+                        <option value="">Select a network item</option>
+                        <option value="edge">edge</option>
+                        <option value="node">node</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'property')"
+                            id="select-property"
+                        >
+                        <option value="">Select a property...</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            id="select-value"
+                        >
+                        <option value="">Select value(s)...</option>
+                    </select>
+                  </div>
+                  <div class="col-1 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="highlightFilter(filter);">Filter</button>
+                  </div>
+                  <div class="col-2 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="clearFilter(true)">Reset Selection</button>
+                  </div>
+                </div>
+              </div>
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+                  // explicitly using onItemAdd and this function as we need to save multiple values
+                  let updateValueFilter = function() {
+                      return function () {
+                      filter['value'].push(arguments[0])
+                      }
+                  }
+
+                  let valueControl = new TomSelect("#select-value",{
+                      maxItems: null,
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: updateValueFilter()
+                  });
+
+                  let addValues = function() {
+                      return function () {
+                          // clear the current value options and add the selected attribute values
+                          // tom-select handles duplicates
+                          let selectedProperty = arguments[0];
+                          valueControl.clear();
+                          valueControl.clearOptions();
+                          filter['value'] = []
+                          if (filter['item'] === 'node') {
+                              for (let each in allNodes) {
+                                  valueControl.addOption({
+                                      id:allNodes[each][selectedProperty],
+                                      title:allNodes[each][selectedProperty]
+                                  })
+                              }
+                          }
+                          else if (filter['item'] === 'edge') {
+                              for (let each in allEdges) {
+                                  valueControl.addOption({
+                                      id:allEdges[each][selectedProperty],
+                                      title:allEdges[each][selectedProperty]
+                                  })
+                              }
+                          }
+                      }
+                  };
+
+                  let propControl = new TomSelect("#select-property",{
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addValues()
+                  });
+
+                  let addProperties = function() {
+                      return function () {
+                          // loops through the selected network item and adds the attributes to dropdown
+                          // tom-select handles duplicates
+                          clearFilter(false)
+                          if (arguments[0] === 'edge') {
+                              for (let each in allEdges) {
+                                  if (allEdges.hasOwnProperty(each)) {
+                                      for (let eachProp in allEdges[each]) {
+                                          if (allEdges[each].hasOwnProperty(eachProp)) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          else if (arguments[0] === 'node') {
+                              for (let each in allNodes) {
+                                  if (allNodes.hasOwnProperty(each)) {
+                                      for (let eachProp in allNodes[each]) {
+                                          if (allNodes[each].hasOwnProperty(eachProp)
+                                              && (eachProp !== 'hidden' && eachProp !== 'savedLabel'
+                                                  && eachProp !== 'hiddenLabel')) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  };
+
+                  let itemControl = new TomSelect("#select-item",{
+                      create: false,
+                      sortField:{
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addProperties()
+                  });
+
+                  function clearFilter(reset) {
+                      // utility function to clear all the selected filter options
+                      // if reset is set to true, the existing filter will be removed
+                      // else, only the dropdown options are cleared
+                      propControl.clear();
+                      propControl.clearOptions();
+                      valueControl.clear();
+                      valueControl.clearOptions();
+                      filter = {
+                          item : '',
+                          property : '',
+                          value : []
+                      }
+                      if (reset) {
+                          itemControl.clear();
+                          filterHighlight({nodes: []})
+                      }
+                  }
+
+                  function updateFilter(value, key) {
+                      // key could be 'item' or 'property' and value is as selected in dropdown
+                      filter[key] = value
+                  }
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"font": {"color": "white"}, "group": "3", "id": "computerusesessioncontext", "label": "computerusesessioncontext", "shape": "triangle", "size": 8, "title": "computerusesessioncontext\nTipo: CLASS\nGrau: 6\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "3", "id": "python", "label": "python", "shape": "diamond", "size": 9.600000000000001, "title": "python\nTipo: TECH\nGrau: 12\nComunidade: 3\nContagem: 27"}, {"font": {"color": "white"}, "group": "3", "id": "vscode", "label": "vscode", "shape": "star", "size": 8, "title": "vscode\nTipo: ORG\nGrau: 9\nComunidade: 3\nContagem: 11"}, {"font": {"color": "white"}, "group": "13", "id": "vertex", "label": "vertex", "shape": "hexagon", "size": 8, "title": "vertex\nTipo: LOC\nGrau: 3\nComunidade: 13\nContagem: 10"}, {"font": {"color": "white"}, "group": "25", "id": "ascii", "label": "ascii", "shape": "star", "size": 8, "title": "ascii\nTipo: ORG\nGrau: 5\nComunidade: 25\nContagem: 7"}, {"font": {"color": "white"}, "group": "2", "id": "ghostty", "label": "ghostty", "shape": "triangleDown", "size": 8, "title": "ghostty\nTipo: PER\nGrau: 7\nComunidade: 2\nContagem: 7"}, {"font": {"color": "white"}, "group": "27", "id": "costusd", "label": "costusd", "shape": "star", "size": 8, "title": "costusd\nTipo: ORG\nGrau: 5\nComunidade: 27\nContagem: 2"}, {"font": {"color": "white"}, "group": "3", "id": "sdk mcp", "label": "sdk mcp", "shape": "diamond", "size": 8, "title": "sdk mcp\nTipo: TECH\nGrau: 3\nComunidade: 3\nContagem: 10"}, {"font": {"color": "white"}, "group": "7", "id": "bitbucket, github api", "label": "bitbucket, github api", "shape": "diamond", "size": 8, "title": "bitbucket, github api\nTipo: TECH\nGrau: 5\nComunidade: 7\nContagem: 1"}, {"font": {"color": "white"}, "group": "3", "id": "lsp", "label": "lsp", "shape": "diamond", "size": 8, "title": "lsp\nTipo: TECH\nGrau: 9\nComunidade: 3\nContagem: 23"}, {"font": {"color": "white"}, "group": "3", "id": "api", "label": "api", "shape": "diamond", "size": 49.6, "title": "api\nTipo: TECH\nGrau: 62\nComunidade: 3\nContagem: 291"}, {"font": {"color": "white"}, "group": "18", "id": "pastedcontent", "label": "pastedcontent", "shape": "star", "size": 8, "title": "pastedcontent\nTipo: ORG\nGrau: 0\nComunidade: 18\nContagem: 5"}, {"font": {"color": "white"}, "group": "58", "id": "dce", "label": "dce", "shape": "star", "size": 8, "title": "dce\nTipo: ORG\nGrau: 1\nComunidade: 58\nContagem: 6"}, {"font": {"color": "white"}, "group": "11", "id": "fallback", "label": "fallback", "shape": "triangleDown", "size": 8, "title": "fallback\nTipo: PER\nGrau: 7\nComunidade: 11\nContagem: 9"}, {"font": {"color": "white"}, "group": "3", "id": "opentelemetry", "label": "opentelemetry", "shape": "dot", "size": 8, "title": "opentelemetry\nTipo: LIB\nGrau: 2\nComunidade: 3\nContagem: 19"}, {"font": {"color": "white"}, "group": "57", "id": "maxbytes", "label": "maxbytes", "shape": "star", "size": 8, "title": "maxbytes\nTipo: ORG\nGrau: 0\nComunidade: 57\nContagem: 6"}, {"font": {"color": "white"}, "group": "63", "id": "dailymodeltokens", "label": "dailymodeltokens", "shape": "star", "size": 8, "title": "dailymodeltokens\nTipo: ORG\nGrau: 0\nComunidade: 63\nContagem: 2"}, {"font": {"color": "white"}, "group": "17", "id": "useimperativehandle", "label": "useimperativehandle", "shape": "star", "size": 8, "title": "useimperativehandle\nTipo: ORG\nGrau: 5\nComunidade: 17\nContagem: 2"}, {"font": {"color": "white"}, "group": "2", "id": "dcs", "label": "dcs", "shape": "star", "size": 8, "title": "dcs\nTipo: ORG\nGrau: 4\nComunidade: 2\nContagem: 6"}, {"font": {"color": "white"}, "group": "13", "id": "tooluseresult", "label": "tooluseresult", "shape": "star", "size": 8, "title": "tooluseresult\nTipo: ORG\nGrau: 1\nComunidade: 13\nContagem: 2"}, {"font": {"color": "white"}, "group": "39", "id": "accesstoken", "label": "accesstoken", "shape": "triangleDown", "size": 8, "title": "accesstoken\nTipo: PER\nGrau: 0\nComunidade: 39\nContagem: 13"}, {"font": {"color": "white"}, "group": "17", "id": "scrolltop", "label": "scrolltop", "shape": "star", "size": 8, "title": "scrolltop\nTipo: ORG\nGrau: 4\nComunidade: 17\nContagem: 20"}, {"font": {"color": "white"}, "group": "7", "id": "github/gitlab", "label": "github/gitlab", "shape": "star", "size": 8, "title": "github/gitlab\nTipo: ORG\nGrau: 4\nComunidade: 7\nContagem: 2"}, {"font": {"color": "white"}, "group": "3", "id": "cli", "label": "cli", "shape": "diamond", "size": 28.0, "title": "cli\nTipo: TECH\nGrau: 35\nComunidade: 3\nContagem: 63"}, {"font": {"color": "white"}, "group": "2", "id": "iterm2", "label": "iterm2", "shape": "hexagon", "size": 8, "title": "iterm2\nTipo: LOC\nGrau: 6\nComunidade: 2\nContagem: 7"}, {"font": {"color": "white"}, "group": "2", "id": "csi u / kitty", "label": "csi u / kitty", "shape": "star", "size": 8, "title": "csi u / kitty\nTipo: ORG\nGrau: 4\nComunidade: 2\nContagem: 1"}, {"font": {"color": "white"}, "group": "20", "id": "normalizedmessage", "label": "normalizedmessage", "shape": "star", "size": 8, "title": "normalizedmessage\nTipo: ORG\nGrau: 3\nComunidade: 20\nContagem: 2"}, {"font": {"color": "white"}, "group": "7", "id": "bitbucket", "label": "bitbucket", "shape": "star", "size": 8, "title": "bitbucket\nTipo: ORG\nGrau: 6\nComunidade: 7\nContagem: 3"}, {"font": {"color": "white"}, "group": "87", "id": "onitemclick", "label": "onitemclick", "shape": "star", "size": 8, "title": "onitemclick\nTipo: ORG\nGrau: 4\nComunidade: 87\nContagem: 1"}, {"font": {"color": "white"}, "group": "6", "id": "-js", "label": "-js", "shape": "dot", "size": 8, "title": "-js\nTipo: LIB\nGrau: 3\nComunidade: 6\nContagem: 3"}, {"font": {"color": "white"}, "group": "1", "id": "id_token", "label": "id_token", "shape": "triangleDown", "size": 8, "title": "id_token\nTipo: PER\nGrau: 2\nComunidade: 1\nContagem: 8"}, {"font": {"color": "white"}, "group": "14", "id": "lrucache", "label": "lrucache", "shape": "star", "size": 8, "title": "lrucache\nTipo: ORG\nGrau: 1\nComunidade: 14\nContagem: 7"}, {"font": {"color": "white"}, "group": "3", "id": "websocket", "label": "websocket", "shape": "diamond", "size": 10.4, "title": "websocket\nTipo: TECH\nGrau: 13\nComunidade: 3\nContagem: 26"}, {"font": {"color": "white"}, "group": "13", "id": "hooks", "label": "hooks", "shape": "square", "size": 8, "title": "hooks\nTipo: FUNC\nGrau: 3\nComunidade: 13\nContagem: 5"}, {"font": {"color": "white"}, "group": "8", "id": "channelentry", "label": "channelentry", "shape": "triangle", "size": 8, "title": "channelentry\nTipo: CLASS\nGrau: 6\nComunidade: 8\nContagem: 2"}, {"font": {"color": "white"}, "group": "11", "id": "posix", "label": "posix", "shape": "star", "size": 8, "title": "posix\nTipo: ORG\nGrau: 5\nComunidade: 11\nContagem: 19"}, {"font": {"color": "white"}, "group": "14", "id": "commandbase", "label": "commandbase", "shape": "triangle", "size": 8, "title": "commandbase\nTipo: CLASS\nGrau: 3\nComunidade: 14\nContagem: 2"}, {"font": {"color": "white"}, "group": "12", "id": "-ai", "label": "-ai", "shape": "dot", "size": 8, "title": "-ai\nTipo: LIB\nGrau: 9\nComunidade: 12\nContagem: 144"}, {"font": {"color": "white"}, "group": "3", "id": "grove", "label": "grove", "shape": "star", "size": 8, "title": "grove\nTipo: ORG\nGrau: 3\nComunidade: 3\nContagem: 3"}, {"font": {"color": "white"}, "group": "3", "id": "mcp client", "label": "mcp client", "shape": "star", "size": 8, "title": "mcp client\nTipo: ORG\nGrau: 4\nComunidade: 3\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "mac", "label": "mac", "shape": "triangleDown", "size": 8, "title": "mac\nTipo: PER\nGrau: 3\nComunidade: 11\nContagem: 2"}, {"font": {"color": "white"}, "group": "25", "id": "normalizes", "label": "normalizes", "shape": "triangleDown", "size": 8, "title": "normalizes\nTipo: PER\nGrau: 2\nComunidade: 25\nContagem: 4"}, {"font": {"color": "white"}, "group": "30", "id": "javascript", "label": "javascript", "shape": "diamond", "size": 8, "title": "javascript\nTipo: TECH\nGrau: 2\nComunidade: 30\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "eperm", "label": "eperm", "shape": "star", "size": 8, "title": "eperm\nTipo: ORG\nGrau: 3\nComunidade: 11\nContagem: 3"}, {"font": {"color": "white"}, "group": "7", "id": "github", "label": "github", "shape": "diamond", "size": 16.8, "title": "github\nTipo: TECH\nGrau: 21\nComunidade: 7\nContagem: 97"}, {"font": {"color": "white"}, "group": "3", "id": "claude desktop", "label": "claude desktop", "shape": "triangleDown", "size": 8, "title": "claude desktop\nTipo: PER\nGrau: 4\nComunidade: 3\nContagem: 6"}, {"font": {"color": "white"}, "group": "17", "id": "dom", "label": "dom", "shape": "star", "size": 8, "title": "dom\nTipo: ORG\nGrau: 6\nComunidade: 17\nContagem: 23"}, {"font": {"color": "white"}, "group": "4", "id": "flexbox", "label": "flexbox", "shape": "star", "size": 8, "title": "flexbox\nTipo: ORG\nGrau: 3\nComunidade: 4\nContagem: 4"}, {"font": {"color": "white"}, "group": "1", "id": "jwt", "label": "jwt", "shape": "diamond", "size": 8, "title": "jwt\nTipo: TECH\nGrau: 9\nComunidade: 1\nContagem: 18"}, {"font": {"color": "white"}, "group": "3", "id": "compute", "label": "compute", "shape": "star", "size": 8, "title": "compute\nTipo: ORG\nGrau: 4\nComunidade: 3\nContagem: 6"}, {"font": {"color": "white"}, "group": "3", "id": "claude ssh", "label": "claude ssh", "shape": "triangleDown", "size": 8, "title": "claude ssh\nTipo: PER\nGrau: 5\nComunidade: 3\nContagem: 15"}, {"font": {"color": "white"}, "group": "87", "id": "renderitem", "label": "renderitem", "shape": "star", "size": 8, "title": "renderitem\nTipo: ORG\nGrau: 4\nComunidade: 87\nContagem: 1"}, {"font": {"color": "white"}, "group": "3", "id": "claude_code_oauth_token", "label": "claude_code_oauth_token", "shape": "star", "size": 8, "title": "claude_code_oauth_token\nTipo: ORG\nGrau: 4\nComunidade: 3\nContagem: 3"}, {"font": {"color": "white"}, "group": "2", "id": "applescript", "label": "applescript", "shape": "star", "size": 8, "title": "applescript\nTipo: ORG\nGrau: 3\nComunidade: 2\nContagem: 3"}, {"font": {"color": "white"}, "group": "15", "id": "nest", "label": "nest", "shape": "dot", "size": 8, "title": "nest\nTipo: LIB\nGrau: 0\nComunidade: 15\nContagem: 3"}, {"font": {"color": "white"}, "group": "82", "id": "messageactionsnav", "label": "messageactionsnav", "shape": "triangle", "size": 8, "title": "messageactionsnav\nTipo: CLASS\nGrau: 4\nComunidade: 82\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "alsa", "label": "alsa", "shape": "star", "size": 8, "title": "alsa\nTipo: ORG\nGrau: 2\nComunidade: 11\nContagem: 4"}, {"font": {"color": "white"}, "group": "17", "id": "refobject", "label": "refobject", "shape": "triangle", "size": 8, "title": "refobject\nTipo: CLASS\nGrau: 7\nComunidade: 17\nContagem: 9"}, {"font": {"color": "white"}, "group": "1", "id": "for", "label": "for", "shape": "square", "size": 8, "title": "for\nTipo: FUNC\nGrau: 3\nComunidade: 1\nContagem: 4"}, {"font": {"color": "white"}, "group": "10", "id": "numallowedtools", "label": "numallowedtools", "shape": "star", "size": 8, "title": "numallowedtools\nTipo: ORG\nGrau: 3\nComunidade: 10\nContagem: 1"}, {"font": {"color": "white"}, "group": "17", "id": "react", "label": "react", "shape": "dot", "size": 22.400000000000002, "title": "react\nTipo: LIB\nGrau: 28\nComunidade: 17\nContagem: 293"}, {"font": {"color": "white"}, "group": "14", "id": "memoized", "label": "memoized", "shape": "triangleDown", "size": 8, "title": "memoized\nTipo: PER\nGrau: 6\nComunidade: 14\nContagem: 5"}, {"font": {"color": "white"}, "group": "28", "id": "payg", "label": "payg", "shape": "star", "size": 8, "title": "payg\nTipo: ORG\nGrau: 1\nComunidade: 28\nContagem: 3"}, {"font": {"color": "white"}, "group": "20", "id": "progressmessage", "label": "progressmessage", "shape": "star", "size": 8, "title": "progressmessage\nTipo: ORG\nGrau: 7\nComunidade: 20\nContagem: 5"}, {"font": {"color": "white"}, "group": "5", "id": "sync", "label": "sync", "shape": "star", "size": 8, "title": "sync\nTipo: ORG\nGrau: 6\nComunidade: 5\nContagem: 11"}, {"font": {"color": "white"}, "group": "81", "id": "usestdin", "label": "usestdin", "shape": "triangleDown", "size": 8, "title": "usestdin\nTipo: PER\nGrau: 1\nComunidade: 81\nContagem: 2"}, {"font": {"color": "white"}, "group": "17", "id": "ref", "label": "ref", "shape": "star", "size": 8, "title": "ref\nTipo: ORG\nGrau: 5\nComunidade: 17\nContagem: 3"}, {"font": {"color": "white"}, "group": "20", "id": "messagetype", "label": "messagetype", "shape": "star", "size": 8, "title": "messagetype\nTipo: ORG\nGrau: 4\nComunidade: 20\nContagem: 2"}, {"font": {"color": "white"}, "group": "82", "id": "messageactionskeybindings", "label": "messageactionskeybindings", "shape": "hexagon", "size": 8, "title": "messageactionskeybindings\nTipo: LOC\nGrau: 4\nComunidade: 82\nContagem: 1"}, {"font": {"color": "white"}, "group": "98", "id": "scriptblock", "label": "scriptblock", "shape": "star", "size": 8, "title": "scriptblock\nTipo: ORG\nGrau: 0\nComunidade: 98\nContagem: 3"}, {"font": {"color": "white"}, "group": "17", "id": "tsx", "label": "tsx", "shape": "diamond", "size": 8, "title": "tsx\nTipo: TECH\nGrau: 10\nComunidade: 17\nContagem: 15"}, {"font": {"color": "white"}, "group": "11", "id": "/usr", "label": "/usr", "shape": "hexagon", "size": 8, "title": "/usr\nTipo: LOC\nGrau: 3\nComunidade: 11\nContagem: 2"}, {"font": {"color": "white"}, "group": "14", "id": "maxtokens", "label": "maxtokens", "shape": "hexagon", "size": 8, "title": "maxtokens\nTipo: LOC\nGrau: 2\nComunidade: 14\nContagem: 7"}, {"font": {"color": "white"}, "group": "17", "id": "usecallback", "label": "usecallback", "shape": "star", "size": 9.600000000000001, "title": "usecallback\nTipo: ORG\nGrau: 12\nComunidade: 17\nContagem: 128"}, {"font": {"color": "white"}, "group": "11", "id": "unc", "label": "unc", "shape": "star", "size": 8, "title": "unc\nTipo: ORG\nGrau: 4\nComunidade: 11\nContagem: 20"}, {"font": {"color": "white"}, "group": "14", "id": "command", "label": "command", "shape": "star", "size": 8, "title": "command\nTipo: ORG\nGrau: 4\nComunidade: 14\nContagem: 3"}, {"font": {"color": "white"}, "group": "17", "id": "scrollbox", "label": "scrollbox", "shape": "star", "size": 8, "title": "scrollbox\nTipo: ORG\nGrau: 6\nComunidade: 17\nContagem: 28"}, {"font": {"color": "white"}, "group": "2", "id": "agenttool", "label": "agenttool", "shape": "star", "size": 8, "title": "agenttool\nTipo: ORG\nGrau: 1\nComunidade: 2\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "cursor", "label": "cursor", "shape": "diamond", "size": 8, "title": "cursor\nTipo: TECH\nGrau: 2\nComunidade: 11\nContagem: 8"}, {"font": {"color": "white"}, "group": "9", "id": "par\u00e2metros", "label": "par\u00e2metros", "shape": "star", "size": 8, "title": "par\u00e2metros\nTipo: ORG\nGrau: 0\nComunidade: 9\nContagem: 3"}, {"font": {"color": "white"}, "group": "1", "id": "lspservers", "label": "lspservers", "shape": "star", "size": 8, "title": "lspservers\nTipo: ORG\nGrau: 1\nComunidade: 1\nContagem: 3"}, {"font": {"color": "white"}, "group": "82", "id": "messageactionsstate", "label": "messageactionsstate", "shape": "triangle", "size": 8, "title": "messageactionsstate\nTipo: CLASS\nGrau: 4\nComunidade: 82\nContagem: 3"}, {"font": {"color": "white"}, "group": "87", "id": "setpositions", "label": "setpositions", "shape": "triangleDown", "size": 8, "title": "setpositions\nTipo: PER\nGrau: 4\nComunidade: 87\nContagem: 1"}, {"font": {"color": "white"}, "group": "12", "id": "anthropic-ai", "label": "anthropic-ai", "shape": "dot", "size": 8, "title": "anthropic-ai\nTipo: LIB\nGrau: 6\nComunidade: 12\nContagem: 27"}, {"font": {"color": "white"}, "group": "3", "id": "cupermissionrequest", "label": "cupermissionrequest", "shape": "triangle", "size": 8, "title": "cupermissionrequest\nTipo: CLASS\nGrau: 6\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "0", "id": "lodash", "label": "lodash", "shape": "dot", "size": 8, "title": "lodash\nTipo: LIB\nGrau: 3\nComunidade: 0\nContagem: 128"}, {"font": {"color": "white"}, "group": "11", "id": "macos/linux", "label": "macos/linux", "shape": "star", "size": 8, "title": "macos/linux\nTipo: ORG\nGrau: 4\nComunidade: 11\nContagem: 1"}, {"font": {"color": "white"}, "group": "4", "id": "eslint", "label": "eslint", "shape": "dot", "size": 8.8, "title": "eslint\nTipo: LIB\nGrau: 11\nComunidade: 4\nContagem: 363"}, {"font": {"color": "white"}, "group": "80", "id": "varscope", "label": "varscope", "shape": "star", "size": 8, "title": "varscope\nTipo: ORG\nGrau: 0\nComunidade: 80\nContagem: 12"}, {"font": {"color": "white"}, "group": "2", "id": "warp", "label": "warp", "shape": "triangleDown", "size": 8, "title": "warp\nTipo: PER\nGrau: 4\nComunidade: 2\nContagem: 1"}, {"font": {"color": "white"}, "group": "20", "id": "assistantmessage", "label": "assistantmessage", "shape": "star", "size": 8, "title": "assistantmessage\nTipo: ORG\nGrau: 6\nComunidade: 20\nContagem: 9"}, {"font": {"color": "white"}, "group": "32", "id": "mcpclients", "label": "mcpclients", "shape": "triangleDown", "size": 8, "title": "mcpclients\nTipo: PER\nGrau: 1\nComunidade: 32\nContagem: 12"}, {"font": {"color": "white"}, "group": "11", "id": "homebrew", "label": "homebrew", "shape": "star", "size": 8, "title": "homebrew\nTipo: ORG\nGrau: 4\nComunidade: 11\nContagem: 7"}, {"font": {"color": "white"}, "group": "10", "id": "mcpclientcount", "label": "mcpclientcount", "shape": "hexagon", "size": 8, "title": "mcpclientcount\nTipo: LOC\nGrau: 3\nComunidade: 10\nContagem: 1"}, {"font": {"color": "white"}, "group": "87", "id": "setcursor", "label": "setcursor", "shape": "hexagon", "size": 8, "title": "setcursor\nTipo: LOC\nGrau: 4\nComunidade: 87\nContagem: 2"}, {"font": {"color": "white"}, "group": "7", "id": "argv0", "label": "argv0", "shape": "star", "size": 8, "title": "argv0\nTipo: ORG\nGrau: 3\nComunidade: 7\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "linux/macos", "label": "linux/macos", "shape": "star", "size": 8, "title": "linux/macos\nTipo: ORG\nGrau: 6\nComunidade: 11\nContagem: 10"}, {"font": {"color": "white"}, "group": "27", "id": "llmspan", "label": "llmspan", "shape": "hexagon", "size": 8, "title": "llmspan\nTipo: LOC\nGrau: 4\nComunidade: 27\nContagem: 1"}, {"font": {"color": "white"}, "group": "16", "id": "sse", "label": "sse", "shape": "diamond", "size": 8, "title": "sse\nTipo: TECH\nGrau: 6\nComunidade: 16\nContagem: 15"}, {"font": {"color": "white"}, "group": "30", "id": "promptinput", "label": "promptinput", "shape": "star", "size": 8, "title": "promptinput\nTipo: ORG\nGrau: 5\nComunidade: 30\nContagem: 10"}, {"font": {"color": "white"}, "group": "3", "id": "mark", "label": "mark", "shape": "triangleDown", "size": 8, "title": "mark\nTipo: PER\nGrau: 3\nComunidade: 3\nContagem: 4"}, {"font": {"color": "white"}, "group": "11", "id": "darwin", "label": "darwin", "shape": "triangleDown", "size": 8, "title": "darwin\nTipo: PER\nGrau: 3\nComunidade: 11\nContagem: 3"}, {"font": {"color": "white"}, "group": "8", "id": "setkairosactive", "label": "setkairosactive", "shape": "hexagon", "size": 8, "title": "setkairosactive\nTipo: LOC\nGrau: 6\nComunidade: 8\nContagem: 1"}, {"font": {"color": "white"}, "group": "12", "id": "clientoptions", "label": "clientoptions", "shape": "triangle", "size": 8, "title": "clientoptions\nTipo: CLASS\nGrau: 3\nComunidade: 12\nContagem: 1"}, {"font": {"color": "white"}, "group": "2", "id": "gnu", "label": "gnu", "shape": "star", "size": 8, "title": "gnu\nTipo: ORG\nGrau: 2\nComunidade: 2\nContagem: 4"}, {"font": {"color": "white"}, "group": "13", "id": "foundry", "label": "foundry", "shape": "hexagon", "size": 8, "title": "foundry\nTipo: LOC\nGrau: 3\nComunidade: 13\nContagem: 16"}, {"font": {"color": "white"}, "group": "11", "id": "microsoft", "label": "microsoft", "shape": "star", "size": 8, "title": "microsoft\nTipo: ORG\nGrau: 4\nComunidade: 11\nContagem: 4"}, {"font": {"color": "white"}, "group": "23", "id": "sighup", "label": "sighup", "shape": "star", "size": 8, "title": "sighup\nTipo: ORG\nGrau: 3\nComunidade: 23\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "linux/windows", "label": "linux/windows", "shape": "star", "size": 8, "title": "linux/windows\nTipo: ORG\nGrau: 3\nComunidade: 11\nContagem: 4"}, {"font": {"color": "white"}, "group": "30", "id": "rgb", "label": "rgb", "shape": "star", "size": 8, "title": "rgb\nTipo: ORG\nGrau: 1\nComunidade: 30\nContagem: 8"}, {"font": {"color": "white"}, "group": "3", "id": "byoc", "label": "byoc", "shape": "star", "size": 8, "title": "byoc\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 2"}, {"font": {"color": "white"}, "group": "38", "id": "scopedmcpserverconfig", "label": "scopedmcpserverconfig", "shape": "triangleDown", "size": 8, "title": "scopedmcpserverconfig\nTipo: PER\nGrau: 2\nComunidade: 38\nContagem: 4"}, {"font": {"color": "white"}, "group": "7", "id": "skill", "label": "skill", "shape": "triangleDown", "size": 8, "title": "skill\nTipo: PER\nGrau: 2\nComunidade: 7\nContagem: 3"}, {"font": {"color": "white"}, "group": "5", "id": "messagesforapi", "label": "messagesforapi", "shape": "triangleDown", "size": 8, "title": "messagesforapi\nTipo: PER\nGrau: 1\nComunidade: 5\nContagem: 2"}, {"font": {"color": "white"}, "group": "13", "id": "zod", "label": "zod", "shape": "dot", "size": 8, "title": "zod\nTipo: LIB\nGrau: 7\nComunidade: 13\nContagem: 20"}, {"font": {"color": "white"}, "group": "0", "id": "lodash-es", "label": "lodash-es", "shape": "dot", "size": 8, "title": "lodash-es\nTipo: LIB\nGrau: 2\nComunidade: 0\nContagem: 125"}, {"font": {"color": "white"}, "group": "33", "id": "canusetool", "label": "canusetool", "shape": "star", "size": 8, "title": "canusetool\nTipo: ORG\nGrau: 0\nComunidade: 33\nContagem: 3"}, {"font": {"color": "white"}, "group": "17", "id": "themeprovider", "label": "themeprovider", "shape": "star", "size": 8, "title": "themeprovider\nTipo: ORG\nGrau: 1\nComunidade: 17\nContagem: 2"}, {"font": {"color": "white"}, "group": "3", "id": "mcp", "label": "mcp", "shape": "diamond", "size": 49.6, "title": "mcp\nTipo: TECH\nGrau: 62\nComunidade: 3\nContagem: 212"}, {"font": {"color": "white"}, "group": "13", "id": "google-auth-library", "label": "google-auth-library", "shape": "star", "size": 8, "title": "google-auth-library\nTipo: ORG\nGrau: 3\nComunidade: 13\nContagem: 4"}, {"font": {"color": "white"}, "group": "10", "id": "hasstdin", "label": "hasstdin", "shape": "hexagon", "size": 8, "title": "hasstdin\nTipo: LOC\nGrau: 3\nComunidade: 10\nContagem: 1"}, {"font": {"color": "white"}, "group": "13", "id": "aws", "label": "aws", "shape": "star", "size": 8, "title": "aws\nTipo: ORG\nGrau: 4\nComunidade: 13\nContagem: 4"}, {"font": {"color": "white"}, "group": "2", "id": "esc", "label": "esc", "shape": "star", "size": 8.8, "title": "esc\nTipo: ORG\nGrau: 11\nComunidade: 2\nContagem: 26"}, {"font": {"color": "white"}, "group": "3", "id": "biome", "label": "biome", "shape": "dot", "size": 8, "title": "biome\nTipo: LIB\nGrau: 4\nComunidade: 3\nContagem: 5"}, {"font": {"color": "white"}, "group": "7", "id": "getbranch", "label": "getbranch", "shape": "hexagon", "size": 8, "title": "getbranch\nTipo: LOC\nGrau: 1\nComunidade: 7\nContagem: 4"}, {"font": {"color": "white"}, "group": "27", "id": "globalcachestrategy, requestsetupms", "label": "globalcachestrategy, requestsetupms", "shape": "star", "size": 8, "title": "globalcachestrategy, requestsetupms\nTipo: ORG\nGrau: 4\nComunidade: 27\nContagem: 1"}, {"font": {"color": "white"}, "group": "4", "id": "typescript", "label": "typescript", "shape": "diamond", "size": 9.600000000000001, "title": "typescript\nTipo: TECH\nGrau: 12\nComunidade: 4\nContagem: 319"}, {"font": {"color": "white"}, "group": "23", "id": "axios", "label": "axios", "shape": "dot", "size": 8, "title": "axios\nTipo: LIB\nGrau: 3\nComunidade: 23\nContagem: 15"}, {"font": {"color": "white"}, "group": "3", "id": "chrome", "label": "chrome", "shape": "star", "size": 8, "title": "chrome\nTipo: ORG\nGrau: 3\nComunidade: 3\nContagem: 10"}, {"font": {"color": "white"}, "group": "3", "id": "pacman", "label": "pacman", "shape": "star", "size": 8, "title": "pacman\nTipo: ORG\nGrau: 1\nComunidade: 3\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "wsl", "label": "wsl", "shape": "diamond", "size": 11.200000000000001, "title": "wsl\nTipo: TECH\nGrau: 14\nComunidade: 11\nContagem: 36"}, {"font": {"color": "white"}, "group": "5", "id": "appstate", "label": "appstate", "shape": "star", "size": 8.8, "title": "appstate\nTipo: ORG\nGrau: 11\nComunidade: 5\nContagem: 37"}, {"font": {"color": "white"}, "group": "11", "id": "sandbox", "label": "sandbox", "shape": "hexagon", "size": 8, "title": "sandbox\nTipo: LOC\nGrau: 6\nComunidade: 11\nContagem: 4"}, {"font": {"color": "white"}, "group": "36", "id": "oldcontent", "label": "oldcontent", "shape": "star", "size": 8, "title": "oldcontent\nTipo: ORG\nGrau: 0\nComunidade: 36\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "oauth", "label": "oauth", "shape": "diamond", "size": 20.0, "title": "oauth\nTipo: TECH\nGrau: 25\nComunidade: 3\nContagem: 115"}, {"font": {"color": "white"}, "group": "2", "id": "da1", "label": "da1", "shape": "triangleDown", "size": 8, "title": "da1\nTipo: PER\nGrau: 2\nComunidade: 2\nContagem: 5"}, {"font": {"color": "white"}, "group": "3", "id": "startkeychainprefetch", "label": "startkeychainprefetch", "shape": "star", "size": 8, "title": "startkeychainprefetch\nTipo: ORG\nGrau: 3\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "28", "id": "opus", "label": "opus", "shape": "star", "size": 8, "title": "opus\nTipo: ORG\nGrau: 0\nComunidade: 28\nContagem: 3"}, {"font": {"color": "white"}, "group": "2", "id": "terminal", "label": "terminal", "shape": "hexagon", "size": 9.600000000000001, "title": "terminal\nTipo: LOC\nGrau: 12\nComunidade: 2\nContagem: 18"}, {"font": {"color": "white"}, "group": "3", "id": "bigquery", "label": "bigquery", "shape": "star", "size": 8, "title": "bigquery\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 3"}, {"font": {"color": "white"}, "group": "17", "id": "usestate", "label": "usestate", "shape": "star", "size": 8, "title": "usestate\nTipo: ORG\nGrau: 8\nComunidade: 17\nContagem: 8"}, {"font": {"color": "white"}, "group": "7", "id": "gitlab api", "label": "gitlab api", "shape": "star", "size": 8, "title": "gitlab api\nTipo: ORG\nGrau: 5\nComunidade: 7\nContagem: 1"}, {"font": {"color": "white"}, "group": "11", "id": "dns", "label": "dns", "shape": "star", "size": 8, "title": "dns\nTipo: ORG\nGrau: 3\nComunidade: 11\nContagem: 5"}, {"font": {"color": "white"}, "group": "3", "id": "claude mcp", "label": "claude mcp", "shape": "triangleDown", "size": 8, "title": "claude mcp\nTipo: PER\nGrau: 4\nComunidade: 3\nContagem: 8"}, {"font": {"color": "white"}, "group": "3", "id": "screenshotdims", "label": "screenshotdims", "shape": "triangle", "size": 8, "title": "screenshotdims\nTipo: CLASS\nGrau: 6\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "12", "id": "apierror", "label": "apierror", "shape": "star", "size": 8, "title": "apierror\nTipo: ORG\nGrau: 5\nComunidade: 12\nContagem: 7"}, {"font": {"color": "white"}, "group": "3", "id": "@param mcptools", "label": "@param mcptools", "shape": "star", "size": 8, "title": "@param mcptools\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 3"}, {"font": {"color": "white"}, "group": "17", "id": "usedeferredvalue", "label": "usedeferredvalue", "shape": "star", "size": 8, "title": "usedeferredvalue\nTipo: ORG\nGrau: 5\nComunidade: 17\nContagem: 2"}, {"font": {"color": "white"}, "group": "30", "id": "usekeybindings", "label": "usekeybindings", "shape": "star", "size": 8, "title": "usekeybindings\nTipo: ORG\nGrau: 3\nComunidade: 30\nContagem: 6"}, {"font": {"color": "white"}, "group": "8", "id": "setinlineplugins", "label": "setinlineplugins", "shape": "triangleDown", "size": 8, "title": "setinlineplugins\nTipo: PER\nGrau: 6\nComunidade: 8\nContagem: 1"}, {"font": {"color": "white"}, "group": "11", "id": "wsl1", "label": "wsl1", "shape": "star", "size": 8, "title": "wsl1\nTipo: ORG\nGrau: 4\nComunidade: 11\nContagem: 3"}, {"font": {"color": "white"}, "group": "16", "id": "repl", "label": "repl", "shape": "diamond", "size": 20.0, "title": "repl\nTipo: TECH\nGrau: 25\nComunidade: 16\nContagem: 56"}, {"font": {"color": "white"}, "group": "2", "id": "kitty", "label": "kitty", "shape": "triangleDown", "size": 8, "title": "kitty\nTipo: PER\nGrau: 7\nComunidade: 2\nContagem: 8"}, {"font": {"color": "white"}, "group": "25", "id": "buffer", "label": "buffer", "shape": "triangleDown", "size": 8, "title": "buffer\nTipo: PER\nGrau: 3\nComunidade: 25\nContagem: 6"}, {"font": {"color": "white"}, "group": "3", "id": "replbridge", "label": "replbridge", "shape": "hexagon", "size": 8, "title": "replbridge\nTipo: LOC\nGrau: 2\nComunidade: 3\nContagem: 4"}, {"font": {"color": "white"}, "group": "7", "id": "stringconstant", "label": "stringconstant", "shape": "star", "size": 8, "title": "stringconstant\nTipo: ORG\nGrau: 1\nComunidade: 7\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "slack", "label": "slack", "shape": "star", "size": 8, "title": "slack\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 2"}, {"font": {"color": "white"}, "group": "20", "id": "systemmessage", "label": "systemmessage", "shape": "star", "size": 8, "title": "systemmessage\nTipo: ORG\nGrau: 4\nComunidade: 20\nContagem: 2"}, {"font": {"color": "white"}, "group": "38", "id": "serverresource", "label": "serverresource", "shape": "star", "size": 8, "title": "serverresource\nTipo: ORG\nGrau: 2\nComunidade: 38\nContagem: 4"}, {"font": {"color": "white"}, "group": "82", "id": "messageactioncaps", "label": "messageactioncaps", "shape": "triangle", "size": 8, "title": "messageactioncaps\nTipo: CLASS\nGrau: 4\nComunidade: 82\nContagem: 1"}, {"font": {"color": "white"}, "group": "3", "id": "ccd", "label": "ccd", "shape": "star", "size": 8, "title": "ccd\nTipo: ORG\nGrau: 5\nComunidade: 3\nContagem: 4"}, {"font": {"color": "white"}, "group": "16", "id": "mcp http", "label": "mcp http", "shape": "star", "size": 8, "title": "mcp http\nTipo: ORG\nGrau: 5\nComunidade: 16\nContagem: 1"}, {"font": {"color": "white"}, "group": "30", "id": "ansi", "label": "ansi", "shape": "star", "size": 8, "title": "ansi\nTipo: ORG\nGrau: 5\nComunidade: 30\nContagem: 14"}, {"font": {"color": "white"}, "group": "6", "id": "commander", "label": "commander", "shape": "dot", "size": 8, "title": "commander\nTipo: LIB\nGrau: 5\nComunidade: 6\nContagem: 5"}, {"font": {"color": "white"}, "group": "27", "id": "connectortextblockcount", "label": "connectortextblockcount", "shape": "star", "size": 8, "title": "connectortextblockcount\nTipo: ORG\nGrau: 3\nComunidade: 27\nContagem: 1"}, {"font": {"color": "white"}, "group": "17", "id": "ink", "label": "ink", "shape": "dot", "size": 16.8, "title": "ink\nTipo: LIB\nGrau: 21\nComunidade: 17\nContagem: 81"}, {"font": {"color": "white"}, "group": "11", "id": "tcc", "label": "tcc", "shape": "star", "size": 8, "title": "tcc\nTipo: ORG\nGrau: 2\nComunidade: 11\nContagem: 6"}, {"font": {"color": "white"}, "group": "8", "id": "setsessionsource", "label": "setsessionsource", "shape": "star", "size": 8, "title": "setsessionsource\nTipo: ORG\nGrau: 6\nComunidade: 8\nContagem: 1"}, {"font": {"color": "white"}, "group": "20", "id": "usermessage", "label": "usermessage", "shape": "star", "size": 8, "title": "usermessage\nTipo: ORG\nGrau: 7\nComunidade: 20\nContagem: 10"}, {"font": {"color": "white"}, "group": "3", "id": "filter", "label": "filter", "shape": "star", "size": 8, "title": "filter\nTipo: ORG\nGrau: 5\nComunidade: 3\nContagem: 7"}, {"font": {"color": "white"}, "group": "11", "id": "shift+tab", "label": "shift+tab", "shape": "star", "size": 8, "title": "shift+tab\nTipo: ORG\nGrau: 2\nComunidade: 11\nContagem: 4"}, {"font": {"color": "white"}, "group": "14", "id": "allowlist", "label": "allowlist", "shape": "triangleDown", "size": 8, "title": "allowlist\nTipo: PER\nGrau: 5\nComunidade: 14\nContagem: 7"}, {"font": {"color": "white"}, "group": "12", "id": "thinkingblockparam", "label": "thinkingblockparam", "shape": "star", "size": 8, "title": "thinkingblockparam\nTipo: ORG\nGrau: 4\nComunidade: 12\nContagem: 3"}, {"font": {"color": "white"}, "group": "1", "id": "idp", "label": "idp", "shape": "star", "size": 8, "title": "idp\nTipo: ORG\nGrau: 8\nComunidade: 1\nContagem: 13"}, {"font": {"color": "white"}, "group": "14", "id": "ttl", "label": "ttl", "shape": "diamond", "size": 8, "title": "ttl\nTipo: TECH\nGrau: 8\nComunidade: 14\nContagem: 11"}, {"font": {"color": "white"}, "group": "3", "id": "cupermissionresponse", "label": "cupermissionresponse", "shape": "triangle", "size": 8, "title": "cupermissionresponse\nTipo: CLASS\nGrau: 6\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "2", "id": "iterm", "label": "iterm", "shape": "star", "size": 8, "title": "iterm\nTipo: ORG\nGrau: 4\nComunidade: 2\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "utc", "label": "utc", "shape": "star", "size": 8, "title": "utc\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "uri", "label": "uri", "shape": "star", "size": 8, "title": "uri\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 2"}, {"font": {"color": "white"}, "group": "14", "id": "growthbook", "label": "growthbook", "shape": "dot", "size": 9.600000000000001, "title": "growthbook\nTipo: LIB\nGrau: 12\nComunidade: 14\nContagem: 51"}, {"font": {"color": "white"}, "group": "20", "id": "uuid", "label": "uuid", "shape": "diamond", "size": 8, "title": "uuid\nTipo: TECH\nGrau: 6\nComunidade: 20\nContagem: 54"}, {"font": {"color": "white"}, "group": "14", "id": "commandresultdisplay", "label": "commandresultdisplay", "shape": "triangle", "size": 8, "title": "commandresultdisplay\nTipo: CLASS\nGrau: 3\nComunidade: 14\nContagem: 3"}, {"font": {"color": "white"}, "group": "7", "id": "shell", "label": "shell", "shape": "star", "size": 8, "title": "shell\nTipo: ORG\nGrau: 4\nComunidade: 7\nContagem: 5"}, {"font": {"color": "white"}, "group": "112", "id": "drow", "label": "drow", "shape": "diamond", "size": 8, "title": "drow\nTipo: TECH\nGrau: 0\nComunidade: 112\nContagem: 4"}, {"font": {"color": "white"}, "group": "1", "id": "token", "label": "token", "shape": "triangleDown", "size": 8, "title": "token\nTipo: PER\nGrau: 4\nComunidade: 1\nContagem: 11"}, {"font": {"color": "white"}, "group": "3", "id": "claude cli", "label": "claude cli", "shape": "triangleDown", "size": 8, "title": "claude cli\nTipo: PER\nGrau: 4\nComunidade: 3\nContagem: 12"}, {"font": {"color": "white"}, "group": "2", "id": "queued", "label": "queued", "shape": "star", "size": 8, "title": "queued\nTipo: ORG\nGrau: 3\nComunidade: 2\nContagem: 8"}, {"font": {"color": "white"}, "group": "20", "id": "attachmentmessage", "label": "attachmentmessage", "shape": "star", "size": 8, "title": "attachmentmessage\nTipo: ORG\nGrau: 7\nComunidade: 20\nContagem: 5"}, {"font": {"color": "white"}, "group": "13", "id": "rpc", "label": "rpc", "shape": "star", "size": 8, "title": "rpc\nTipo: ORG\nGrau: 4\nComunidade: 13\nContagem: 5"}, {"font": {"color": "white"}, "group": "11", "id": "macos", "label": "macos", "shape": "diamond", "size": 24.8, "title": "macos\nTipo: TECH\nGrau: 31\nComunidade: 11\nContagem: 92"}, {"font": {"color": "white"}, "group": "14", "id": "env var", "label": "env var", "shape": "star", "size": 8, "title": "env var\nTipo: ORG\nGrau: 6\nComunidade: 14\nContagem: 8"}, {"font": {"color": "white"}, "group": "11", "id": "ntfs", "label": "ntfs", "shape": "star", "size": 8, "title": "ntfs\nTipo: ORG\nGrau: 4\nComunidade: 11\nContagem: 4"}, {"font": {"color": "white"}, "group": "7", "id": "cachedir", "label": "cachedir", "shape": "star", "size": 8, "title": "cachedir\nTipo: ORG\nGrau: 2\nComunidade: 7\nContagem: 4"}, {"font": {"color": "white"}, "group": "5", "id": "taskstate", "label": "taskstate", "shape": "star", "size": 8, "title": "taskstate\nTipo: ORG\nGrau: 0\nComunidade: 5\nContagem: 5"}, {"font": {"color": "white"}, "group": "4", "id": "rust", "label": "rust", "shape": "diamond", "size": 8, "title": "rust\nTipo: TECH\nGrau: 2\nComunidade: 4\nContagem: 7"}, {"font": {"color": "white"}, "group": "23", "id": "sigint", "label": "sigint", "shape": "star", "size": 8, "title": "sigint\nTipo: ORG\nGrau: 3\nComunidade: 23\nContagem: 3"}, {"font": {"color": "white"}, "group": "48", "id": "promise", "label": "promise", "shape": "diamond", "size": 8, "title": "promise\nTipo: TECH\nGrau: 1\nComunidade: 48\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "auth", "label": "auth", "shape": "diamond", "size": 11.200000000000001, "title": "auth\nTipo: TECH\nGrau: 14\nComunidade: 3\nContagem: 54"}, {"font": {"color": "white"}, "group": "7", "id": "bashtool", "label": "bashtool", "shape": "star", "size": 8, "title": "bashtool\nTipo: ORG\nGrau: 3\nComunidade: 7\nContagem: 7"}, {"font": {"color": "white"}, "group": "3", "id": "java mcp sdk", "label": "java mcp sdk", "shape": "star", "size": 8, "title": "java mcp sdk\nTipo: ORG\nGrau: 3\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "3", "id": "that", "label": "that", "shape": "square", "size": 8, "title": "that\nTipo: FUNC\nGrau: 7\nComunidade: 3\nContagem: 11"}, {"font": {"color": "white"}, "group": "1", "id": "suffix", "label": "suffix", "shape": "star", "size": 8, "title": "suffix\nTipo: ORG\nGrau: 3\nComunidade: 1\nContagem: 9"}, {"font": {"color": "white"}, "group": "37", "id": "idpissuer", "label": "idpissuer", "shape": "triangleDown", "size": 8, "title": "idpissuer\nTipo: PER\nGrau: 0\nComunidade: 37\nContagem: 8"}, {"font": {"color": "white"}, "group": "17", "id": "usecontext", "label": "usecontext", "shape": "star", "size": 8, "title": "usecontext\nTipo: ORG\nGrau: 7\nComunidade: 17\nContagem: 12"}, {"font": {"color": "white"}, "group": "3", "id": "ide", "label": "ide", "shape": "star", "size": 8.8, "title": "ide\nTipo: ORG\nGrau: 11\nComunidade: 3\nContagem: 23"}, {"font": {"color": "white"}, "group": "25", "id": "utf-8", "label": "utf-8", "shape": "diamond", "size": 8, "title": "utf-8\nTipo: TECH\nGrau: 2\nComunidade: 25\nContagem: 7"}, {"font": {"color": "white"}, "group": "23", "id": "sigkill", "label": "sigkill", "shape": "star", "size": 8, "title": "sigkill\nTipo: ORG\nGrau: 4\nComunidade: 23\nContagem: 4"}, {"font": {"color": "white"}, "group": "12", "id": "contentblockparam", "label": "contentblockparam", "shape": "star", "size": 8, "title": "contentblockparam\nTipo: ORG\nGrau: 3\nComunidade: 12\nContagem: 4"}, {"font": {"color": "white"}, "group": "13", "id": "json", "label": "json", "shape": "hexagon", "size": 9.600000000000001, "title": "json\nTipo: LOC\nGrau: 12\nComunidade: 13\nContagem: 21"}, {"font": {"color": "white"}, "group": "17", "id": "useeffect", "label": "useeffect", "shape": "star", "size": 10.4, "title": "useeffect\nTipo: ORG\nGrau: 13\nComunidade: 17\nContagem: 80"}, {"font": {"color": "white"}, "group": "20", "id": "renderablemessage", "label": "renderablemessage", "shape": "star", "size": 8, "title": "renderablemessage\nTipo: ORG\nGrau: 4\nComunidade: 20\nContagem: 2"}, {"font": {"color": "white"}, "group": "83", "id": "_temp4", "label": "_temp4", "shape": "square", "size": 8, "title": "_temp4\nTipo: FUNC\nGrau: 0\nComunidade: 83\nContagem: 4"}, {"font": {"color": "white"}, "group": "13", "id": "als", "label": "als", "shape": "star", "size": 8, "title": "als\nTipo: ORG\nGrau: 2\nComunidade: 13\nContagem: 4"}, {"font": {"color": "white"}, "group": "45", "id": "buf", "label": "buf", "shape": "star", "size": 8, "title": "buf\nTipo: ORG\nGrau: 0\nComunidade: 45\nContagem: 7"}, {"font": {"color": "white"}, "group": "8", "id": "setclienttype", "label": "setclienttype", "shape": "hexagon", "size": 8, "title": "setclienttype\nTipo: LOC\nGrau: 6\nComunidade: 8\nContagem: 1"}, {"font": {"color": "white"}, "group": "82", "id": "messageactionsbar", "label": "messageactionsbar", "shape": "hexagon", "size": 8, "title": "messageactionsbar\nTipo: LOC\nGrau: 4\nComunidade: 82\nContagem: 1"}, {"font": {"color": "white"}, "group": "11", "id": "eol", "label": "eol", "shape": "star", "size": 8, "title": "eol\nTipo: ORG\nGrau: 4\nComunidade: 11\nContagem: 5"}, {"font": {"color": "white"}, "group": "12", "id": "toolresultblockparam", "label": "toolresultblockparam", "shape": "star", "size": 8, "title": "toolresultblockparam\nTipo: ORG\nGrau: 4\nComunidade: 12\nContagem: 3"}, {"font": {"color": "white"}, "group": "6", "id": "invalidargumenterror", "label": "invalidargumenterror", "shape": "star", "size": 8, "title": "invalidargumenterror\nTipo: ORG\nGrau: 3\nComunidade: 6\nContagem: 1"}, {"font": {"color": "white"}, "group": "27", "id": "previousrequestid", "label": "previousrequestid", "shape": "star", "size": 8, "title": "previousrequestid\nTipo: ORG\nGrau: 5\nComunidade: 27\nContagem: 2"}, {"font": {"color": "white"}, "group": "23", "id": "sigterm", "label": "sigterm", "shape": "star", "size": 8, "title": "sigterm\nTipo: ORG\nGrau: 4\nComunidade: 23\nContagem: 2"}, {"font": {"color": "white"}, "group": "22", "id": "childprocess", "label": "childprocess", "shape": "triangle", "size": 8, "title": "childprocess\nTipo: CLASS\nGrau: 1\nComunidade: 22\nContagem: 9"}, {"font": {"color": "white"}, "group": "11", "id": "ntlm", "label": "ntlm", "shape": "star", "size": 8, "title": "ntlm\nTipo: ORG\nGrau: 3\nComunidade: 11\nContagem: 10"}, {"font": {"color": "white"}, "group": "30", "id": "useinput", "label": "useinput", "shape": "star", "size": 8, "title": "useinput\nTipo: ORG\nGrau: 3\nComunidade: 30\nContagem: 14"}, {"font": {"color": "white"}, "group": "5", "id": "task", "label": "task", "shape": "diamond", "size": 8, "title": "task\nTipo: TECH\nGrau: 1\nComunidade: 5\nContagem: 6"}, {"font": {"color": "white"}, "group": "20", "id": "jsonl", "label": "jsonl", "shape": "star", "size": 8, "title": "jsonl\nTipo: ORG\nGrau: 6\nComunidade: 20\nContagem: 10"}, {"font": {"color": "white"}, "group": "87", "id": "cursornavref", "label": "cursornavref", "shape": "star", "size": 8, "title": "cursornavref\nTipo: ORG\nGrau: 4\nComunidade: 87\nContagem: 1"}, {"font": {"color": "white"}, "group": "16", "id": "non-anthropic", "label": "non-anthropic", "shape": "diamond", "size": 8, "title": "non-anthropic\nTipo: TECH\nGrau: 5\nComunidade: 16\nContagem: 1"}, {"font": {"color": "white"}, "group": "23", "id": "node", "label": "node", "shape": "star", "size": 8, "title": "node\nTipo: ORG\nGrau: 6\nComunidade: 23\nContagem: 12"}, {"font": {"color": "white"}, "group": "3", "id": "jsonrpc", "label": "jsonrpc", "shape": "triangleDown", "size": 8, "title": "jsonrpc\nTipo: PER\nGrau: 3\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "11", "id": "windsurf", "label": "windsurf", "shape": "star", "size": 8, "title": "windsurf\nTipo: ORG\nGrau: 3\nComunidade: 11\nContagem: 4"}, {"font": {"color": "white"}, "group": "6", "id": "commander-js", "label": "commander-js", "shape": "dot", "size": 8, "title": "commander-js\nTipo: LIB\nGrau: 3\nComunidade: 6\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "sox", "label": "sox", "shape": "star", "size": 8, "title": "sox\nTipo: ORG\nGrau: 8\nComunidade: 11\nContagem: 10"}, {"font": {"color": "white"}, "group": "2", "id": "convert", "label": "convert", "shape": "triangleDown", "size": 8, "title": "convert\nTipo: PER\nGrau: 2\nComunidade: 2\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "cucalltoolresult", "label": "cucalltoolresult", "shape": "triangle", "size": 8, "title": "cucalltoolresult\nTipo: CLASS\nGrau: 6\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "11", "id": "windows", "label": "windows", "shape": "diamond", "size": 28.0, "title": "windows\nTipo: TECH\nGrau: 35\nComunidade: 11\nContagem: 153"}, {"font": {"color": "white"}, "group": "10", "id": "systempromptflag", "label": "systempromptflag", "shape": "triangleDown", "size": 8, "title": "systempromptflag\nTipo: PER\nGrau: 3\nComunidade: 10\nContagem: 1"}, {"font": {"color": "white"}, "group": "3", "id": "pii", "label": "pii", "shape": "star", "size": 8, "title": "pii\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 4"}, {"font": {"color": "white"}, "group": "13", "id": "llm", "label": "llm", "shape": "diamond", "size": 8, "title": "llm\nTipo: TECH\nGrau: 3\nComunidade: 13\nContagem: 4"}, {"font": {"color": "white"}, "group": "1", "id": "mcptools", "label": "mcptools", "shape": "star", "size": 8, "title": "mcptools\nTipo: ORG\nGrau: 0\nComunidade: 1\nContagem: 3"}, {"font": {"color": "white"}, "group": "25", "id": "plugin@marketplace", "label": "plugin@marketplace", "shape": "star", "size": 8, "title": "plugin@marketplace\nTipo: ORG\nGrau: 2\nComunidade: 25\nContagem: 13"}, {"font": {"color": "white"}, "group": "12", "id": "closestream", "label": "closestream", "shape": "star", "size": 8, "title": "closestream\nTipo: ORG\nGrau: 1\nComunidade: 12\nContagem: 3"}, {"font": {"color": "white"}, "group": "11", "id": "powershell", "label": "powershell", "shape": "star", "size": 11.200000000000001, "title": "powershell\nTipo: ORG\nGrau: 14\nComunidade: 11\nContagem: 37"}, {"font": {"color": "white"}, "group": "7", "id": "rest", "label": "rest", "shape": "diamond", "size": 8, "title": "rest\nTipo: TECH\nGrau: 9\nComunidade: 7\nContagem: 7"}, {"font": {"color": "white"}, "group": "2", "id": "wezterm", "label": "wezterm", "shape": "hexagon", "size": 8, "title": "wezterm\nTipo: LOC\nGrau: 7\nComunidade: 2\nContagem: 3"}, {"font": {"color": "white"}, "group": "7", "id": "http://", "label": "http://", "shape": "diamond", "size": 8, "title": "http://\nTipo: TECH\nGrau: 2\nComunidade: 7\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "ant", "label": "ant", "shape": "dot", "size": 8, "title": "ant\nTipo: LIB\nGrau: 7\nComunidade: 3\nContagem: 10"}, {"font": {"color": "white"}, "group": "8", "id": "setallowedchannels", "label": "setallowedchannels", "shape": "star", "size": 8, "title": "setallowedchannels\nTipo: ORG\nGrau: 6\nComunidade: 8\nContagem: 2"}, {"font": {"color": "white"}, "group": "14", "id": "claudecodeinternalevent", "label": "claudecodeinternalevent", "shape": "star", "size": 8, "title": "claudecodeinternalevent\nTipo: ORG\nGrau: 3\nComunidade: 14\nContagem: 2"}, {"font": {"color": "white"}, "group": "8", "id": "getusermsgoptin", "label": "getusermsgoptin", "shape": "triangleDown", "size": 8, "title": "getusermsgoptin\nTipo: PER\nGrau: 6\nComunidade: 8\nContagem: 1"}, {"font": {"color": "white"}, "group": "12", "id": "anthropic", "label": "anthropic", "shape": "dot", "size": 21.6, "title": "anthropic\nTipo: LIB\nGrau: 27\nComunidade: 12\nContagem: 218"}, {"font": {"color": "white"}, "group": "14", "id": "promptcommand", "label": "promptcommand", "shape": "triangle", "size": 8, "title": "promptcommand\nTipo: CLASS\nGrau: 4\nComunidade: 14\nContagem: 3"}, {"font": {"color": "white"}, "group": "3", "id": "readme", "label": "readme", "shape": "diamond", "size": 8, "title": "readme\nTipo: TECH\nGrau: 4\nComunidade: 3\nContagem: 4"}, {"font": {"color": "white"}, "group": "7", "id": "dir", "label": "dir", "shape": "star", "size": 8, "title": "dir\nTipo: ORG\nGrau: 1\nComunidade: 7\nContagem: 5"}, {"font": {"color": "white"}, "group": "53", "id": "maxwidth", "label": "maxwidth", "shape": "star", "size": 8, "title": "maxwidth\nTipo: ORG\nGrau: 0\nComunidade: 53\nContagem: 11"}, {"font": {"color": "white"}, "group": "2", "id": "textstyle", "label": "textstyle", "shape": "triangle", "size": 8, "title": "textstyle\nTipo: CLASS\nGrau: 2\nComunidade: 2\nContagem: 4"}, {"font": {"color": "white"}, "group": "1", "id": "xaa", "label": "xaa", "shape": "diamond", "size": 8, "title": "xaa\nTipo: TECH\nGrau: 7\nComunidade: 1\nContagem: 9"}, {"font": {"color": "white"}, "group": "7", "id": "taskoutput", "label": "taskoutput", "shape": "diamond", "size": 8, "title": "taskoutput\nTipo: TECH\nGrau: 1\nComunidade: 7\nContagem: 5"}, {"font": {"color": "white"}, "group": "12", "id": "textblockparam", "label": "textblockparam", "shape": "star", "size": 8, "title": "textblockparam\nTipo: ORG\nGrau: 4\nComunidade: 12\nContagem: 1"}, {"font": {"color": "white"}, "group": "7", "id": "gcs", "label": "gcs", "shape": "star", "size": 8, "title": "gcs\nTipo: ORG\nGrau: 5\nComunidade: 7\nContagem: 9"}, {"font": {"color": "white"}, "group": "3", "id": "claude", "label": "claude", "shape": "dot", "size": 47.2, "title": "claude\nTipo: LIB\nGrau: 59\nComunidade: 3\nContagem: 345"}, {"font": {"color": "white"}, "group": "3", "id": "tls", "label": "tls", "shape": "star", "size": 8, "title": "tls\nTipo: ORG\nGrau: 2\nComunidade: 3\nContagem: 5"}, {"font": {"color": "white"}, "group": "7", "id": "non-github", "label": "non-github", "shape": "diamond", "size": 8, "title": "non-github\nTipo: TECH\nGrau: 4\nComunidade: 7\nContagem: 1"}, {"font": {"color": "white"}, "group": "17", "id": "reactnode", "label": "reactnode", "shape": "triangle", "size": 8, "title": "reactnode\nTipo: CLASS\nGrau: 6\nComunidade: 17\nContagem: 44"}, {"font": {"color": "white"}, "group": "11", "id": "linux", "label": "linux", "shape": "diamond", "size": 16.0, "title": "linux\nTipo: TECH\nGrau: 20\nComunidade: 11\nContagem: 66"}, {"font": {"color": "white"}, "group": "35", "id": "maxlength", "label": "maxlength", "shape": "star", "size": 8, "title": "maxlength\nTipo: ORG\nGrau: 0\nComunidade: 35\nContagem: 4"}, {"font": {"color": "white"}, "group": "2", "id": "csi", "label": "csi", "shape": "triangleDown", "size": 8, "title": "csi\nTipo: PER\nGrau: 7\nComunidade: 2\nContagem: 26"}, {"font": {"color": "white"}, "group": "13", "id": "hookmatcher", "label": "hookmatcher", "shape": "star", "size": 8, "title": "hookmatcher\nTipo: ORG\nGrau: 3\nComunidade: 13\nContagem: 5"}, {"font": {"color": "white"}, "group": "3", "id": "mcp sdk", "label": "mcp sdk", "shape": "star", "size": 8, "title": "mcp sdk\nTipo: ORG\nGrau: 1\nComunidade: 3\nContagem: 3"}, {"font": {"color": "white"}, "group": "32", "id": "tasklistid", "label": "tasklistid", "shape": "hexagon", "size": 8, "title": "tasklistid\nTipo: LOC\nGrau: 1\nComunidade: 32\nContagem: 17"}, {"font": {"color": "white"}, "group": "26", "id": "delta", "label": "delta", "shape": "star", "size": 8, "title": "delta\nTipo: ORG\nGrau: 0\nComunidade: 26\nContagem: 7"}, {"font": {"color": "white"}, "group": "11", "id": "jetbrains", "label": "jetbrains", "shape": "star", "size": 8, "title": "jetbrains\nTipo: ORG\nGrau: 5\nComunidade: 11\nContagem: 7"}, {"font": {"color": "white"}, "group": "14", "id": "statsig", "label": "statsig", "shape": "star", "size": 8, "title": "statsig\nTipo: ORG\nGrau: 5\nComunidade: 14\nContagem: 8"}, {"font": {"color": "white"}, "group": "92", "id": "onimagepaste", "label": "onimagepaste", "shape": "triangleDown", "size": 8, "title": "onimagepaste\nTipo: PER\nGrau: 1\nComunidade: 92\nContagem: 2"}, {"font": {"color": "white"}, "group": "5", "id": "setappstate", "label": "setappstate", "shape": "star", "size": 8, "title": "setappstate\nTipo: ORG\nGrau: 3\nComunidade: 5\nContagem: 12"}, {"font": {"color": "white"}, "group": "25", "id": "@param", "label": "@param", "shape": "diamond", "size": 8, "title": "@param\nTipo: TECH\nGrau: 8\nComunidade: 25\nContagem: 38"}, {"font": {"color": "white"}, "group": "1", "id": "prm", "label": "prm", "shape": "star", "size": 8, "title": "prm\nTipo: ORG\nGrau: 3\nComunidade: 1\nContagem: 4"}, {"font": {"color": "white"}, "group": "3", "id": "datadog", "label": "datadog", "shape": "dot", "size": 8, "title": "datadog\nTipo: LIB\nGrau: 2\nComunidade: 3\nContagem: 6"}, {"font": {"color": "white"}, "group": "2", "id": "sgr", "label": "sgr", "shape": "star", "size": 8, "title": "sgr\nTipo: ORG\nGrau: 4\nComunidade: 2\nContagem: 7"}, {"font": {"color": "white"}, "group": "5", "id": "tooluseid", "label": "tooluseid", "shape": "star", "size": 8, "title": "tooluseid\nTipo: ORG\nGrau: 2\nComunidade: 5\nContagem: 10"}, {"font": {"color": "white"}, "group": "7", "id": "git", "label": "git", "shape": "diamond", "size": 31.200000000000003, "title": "git\nTipo: TECH\nGrau: 39\nComunidade: 7\nContagem: 141"}, {"font": {"color": "white"}, "group": "13", "id": "adc", "label": "adc", "shape": "star", "size": 8, "title": "adc\nTipo: ORG\nGrau: 2\nComunidade: 13\nContagem: 3"}, {"font": {"color": "white"}, "group": "30", "id": "domelement", "label": "domelement", "shape": "star", "size": 8, "title": "domelement\nTipo: ORG\nGrau: 2\nComunidade: 30\nContagem: 3"}, {"font": {"color": "white"}, "group": "7", "id": "gitlab", "label": "gitlab", "shape": "diamond", "size": 8, "title": "gitlab\nTipo: TECH\nGrau: 10\nComunidade: 7\nContagem: 7"}, {"font": {"color": "white"}, "group": "27", "id": "prenormalizedmodel", "label": "prenormalizedmodel", "shape": "hexagon", "size": 8, "title": "prenormalizedmodel\nTipo: LOC\nGrau: 5\nComunidade: 27\nContagem: 2"}, {"font": {"color": "white"}, "group": "13", "id": "googleauth", "label": "googleauth", "shape": "star", "size": 8, "title": "googleauth\nTipo: ORG\nGrau: 2\nComunidade: 13\nContagem: 3"}, {"font": {"color": "white"}, "group": "3", "id": "pid", "label": "pid", "shape": "star", "size": 8, "title": "pid\nTipo: ORG\nGrau: 3\nComunidade: 3\nContagem: 11"}, {"font": {"color": "white"}, "group": "31", "id": "pluginmanifest", "label": "pluginmanifest", "shape": "star", "size": 8, "title": "pluginmanifest\nTipo: ORG\nGrau: 0\nComunidade: 31\nContagem: 4"}, {"font": {"color": "white"}, "group": "2", "id": "alacritty", "label": "alacritty", "shape": "triangleDown", "size": 8, "title": "alacritty\nTipo: PER\nGrau: 4\nComunidade: 2\nContagem: 3"}, {"font": {"color": "white"}, "group": "13", "id": "bash", "label": "bash", "shape": "diamond", "size": 8, "title": "bash\nTipo: TECH\nGrau: 8\nComunidade: 13\nContagem: 17"}, {"font": {"color": "white"}, "group": "3", "id": "spring ai", "label": "spring ai", "shape": "star", "size": 8, "title": "spring ai\nTipo: ORG\nGrau: 3\nComunidade: 3\nContagem: 1"}, {"font": {"color": "white"}, "group": "16", "id": "setmessages", "label": "setmessages", "shape": "star", "size": 8, "title": "setmessages\nTipo: ORG\nGrau: 2\nComunidade: 16\nContagem: 7"}, {"font": {"color": "white"}, "group": "16", "id": "microtask", "label": "microtask", "shape": "hexagon", "size": 8, "title": "microtask\nTipo: LOC\nGrau: 4\nComunidade: 16\nContagem: 6"}, {"font": {"color": "white"}, "group": "14", "id": "cse", "label": "cse", "shape": "diamond", "size": 8, "title": "cse\nTipo: TECH\nGrau: 3\nComunidade: 14\nContagem: 6"}, {"font": {"color": "white"}, "group": "3", "id": "java", "label": "java", "shape": "diamond", "size": 8, "title": "java\nTipo: TECH\nGrau: 6\nComunidade: 3\nContagem: 4"}, {"font": {"color": "white"}, "group": "23", "id": "docker", "label": "docker", "shape": "diamond", "size": 8, "title": "docker\nTipo: TECH\nGrau: 4\nComunidade: 23\nContagem: 13"}, {"font": {"color": "white"}, "group": "7", "id": "https://github", "label": "https://github", "shape": "star", "size": 8, "title": "https://github\nTipo: ORG\nGrau: 3\nComunidade: 7\nContagem: 23"}, {"font": {"color": "white"}, "group": "7", "id": "vcs", "label": "vcs", "shape": "star", "size": 8, "title": "vcs\nTipo: ORG\nGrau: 1\nComunidade: 7\nContagem: 4"}, {"font": {"color": "white"}, "group": "25", "id": "map", "label": "map", "shape": "hexagon", "size": 8, "title": "map\nTipo: LOC\nGrau: 2\nComunidade: 25\nContagem: 3"}, {"font": {"color": "white"}, "group": "3", "id": "ccr", "label": "ccr", "shape": "diamond", "size": 16.8, "title": "ccr\nTipo: TECH\nGrau: 21\nComunidade: 3\nContagem: 75"}]);
+                  edges = new vis.DataSet([{"from": "computerusesessioncontext", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "computerusesessioncontext", "title": "Peso: 1.0", "to": "ant", "value": 1.0}, {"from": "computerusesessioncontext", "title": "Peso: 1.0", "to": "cucalltoolresult", "value": 1.0}, {"from": "computerusesessioncontext", "title": "Peso: 1.0", "to": "cupermissionrequest", "value": 1.0}, {"from": "computerusesessioncontext", "title": "Peso: 1.0", "to": "cupermissionresponse", "value": 1.0}, {"from": "computerusesessioncontext", "title": "Peso: 1.0", "to": "screenshotdims", "value": 1.0}, {"from": "python", "title": "Peso: 1.0", "to": "typescript", "value": 1.0}, {"from": "python", "title": "Peso: 15.0", "to": "api", "value": 15.0}, {"from": "python", "title": "Peso: 1.0", "to": "github", "value": 1.0}, {"from": "python", "title": "Peso: 1.0", "to": "bash", "value": 1.0}, {"from": "python", "title": "Peso: 8.0", "to": "claude", "value": 8.0}, {"from": "python", "title": "Peso: 1.0", "to": "cli", "value": 1.0}, {"from": "python", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "python", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "python", "title": "Peso: 1.0", "to": "tsx", "value": 1.0}, {"from": "python", "title": "Peso: 1.0", "to": "java", "value": 1.0}, {"from": "python", "title": "Peso: 1.0", "to": "iterm2", "value": 1.0}, {"from": "python", "title": "Peso: 2.0", "to": "readme", "value": 2.0}, {"from": "vscode", "title": "Peso: 4.0", "to": "mcp", "value": 4.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "oauth", "value": 1.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "api", "value": 1.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "cli", "value": 1.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "wsl", "value": 1.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "json", "value": 1.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "windsurf", "value": 1.0}, {"from": "vscode", "title": "Peso: 1.0", "to": "iterm", "value": 1.0}, {"from": "vertex", "title": "Peso: 2.0", "to": "api", "value": 2.0}, {"from": "vertex", "title": "Peso: 1.0", "to": "googleauth", "value": 1.0}, {"from": "vertex", "title": "Peso: 5.0", "to": "foundry", "value": 5.0}, {"from": "ascii", "title": "Peso: 1.0", "to": "kitty", "value": 1.0}, {"from": "ascii", "title": "Peso: 1.0", "to": "utf-8", "value": 1.0}, {"from": "ascii", "title": "Peso: 1.0", "to": "map", "value": 1.0}, {"from": "ascii", "title": "Peso: 1.0", "to": "ansi", "value": 1.0}, {"from": "ascii", "title": "Peso: 1.0", "to": "allowlist", "value": 1.0}, {"from": "ghostty", "title": "Peso: 2.0", "to": "kitty", "value": 2.0}, {"from": "ghostty", "title": "Peso: 2.0", "to": "alacritty", "value": 2.0}, {"from": "ghostty", "title": "Peso: 2.0", "to": "iterm2", "value": 2.0}, {"from": "ghostty", "title": "Peso: 1.0", "to": "sgr", "value": 1.0}, {"from": "ghostty", "title": "Peso: 1.0", "to": "csi u / kitty", "value": 1.0}, {"from": "ghostty", "title": "Peso: 1.0", "to": "warp", "value": 1.0}, {"from": "ghostty", "title": "Peso: 1.0", "to": "wezterm", "value": 1.0}, {"from": "costusd", "title": "Peso: 2.0", "to": "prenormalizedmodel", "value": 2.0}, {"from": "costusd", "title": "Peso: 1.0", "to": "connectortextblockcount", "value": 1.0}, {"from": "costusd", "title": "Peso: 2.0", "to": "previousrequestid", "value": 2.0}, {"from": "costusd", "title": "Peso: 1.0", "to": "globalcachestrategy, requestsetupms", "value": 1.0}, {"from": "costusd", "title": "Peso: 1.0", "to": "llmspan", "value": 1.0}, {"from": "sdk mcp", "title": "Peso: 10.0", "to": "mcp", "value": 10.0}, {"from": "sdk mcp", "title": "Peso: 2.0", "to": "cli", "value": 2.0}, {"from": "sdk mcp", "title": "Peso: 1.0", "to": "mcp client", "value": 1.0}, {"from": "bitbucket, github api", "title": "Peso: 1.0", "to": "api", "value": 1.0}, {"from": "bitbucket, github api", "title": "Peso: 1.0", "to": "github", "value": 1.0}, {"from": "bitbucket, github api", "title": "Peso: 1.0", "to": "gitlab", "value": 1.0}, {"from": "bitbucket, github api", "title": "Peso: 1.0", "to": "rest", "value": 1.0}, {"from": "bitbucket, github api", "title": "Peso: 1.0", "to": "gitlab api", "value": 1.0}, {"from": "lsp", "title": "Peso: 11.0", "to": "mcp", "value": 11.0}, {"from": "lsp", "title": "Peso: 1.0", "to": "appstate", "value": 1.0}, {"from": "lsp", "title": "Peso: 2.0", "to": "bash", "value": 2.0}, {"from": "lsp", "title": "Peso: 2.0", "to": "claude", "value": 2.0}, {"from": "lsp", "title": "Peso: 1.0", "to": "cli", "value": 1.0}, {"from": "lsp", "title": "Peso: 1.0", "to": "ide", "value": 1.0}, {"from": "lsp", "title": "Peso: 1.0", "to": "uri", "value": 1.0}, {"from": "lsp", "title": "Peso: 1.0", "to": "lspservers", "value": 1.0}, {"from": "lsp", "title": "Peso: 1.0", "to": "gcs", "value": 1.0}, {"from": "api", "title": "Peso: 7.0", "to": "mcp", "value": 7.0}, {"from": "api", "title": "Peso: 1.0", "to": "filter", "value": 1.0}, {"from": "api", "title": "Peso: 7.0", "to": "typescript", "value": 7.0}, {"from": "api", "title": "Peso: 1.0", "to": "appstate", "value": 1.0}, {"from": "api", "title": "Peso: 33.0", "to": "oauth", "value": 33.0}, {"from": "api", "title": "Peso: 2.0", "to": "macos", "value": 2.0}, {"from": "api", "title": "Peso: 1.0", "to": "startkeychainprefetch", "value": 1.0}, {"from": "api", "title": "Peso: 31.0", "to": "anthropic", "value": 31.0}, {"from": "api", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "api", "title": "Peso: 72.0", "to": "claude", "value": 72.0}, {"from": "api", "title": "Peso: 1.0", "to": "mac", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "tcc", "value": 1.0}, {"from": "api", "title": "Peso: 2.0", "to": "zod", "value": 2.0}, {"from": "api", "title": "Peso: 9.0", "to": "ccr", "value": 9.0}, {"from": "api", "title": "Peso: 4.0", "to": "auth", "value": 4.0}, {"from": "api", "title": "Peso: 7.0", "to": "@param", "value": 7.0}, {"from": "api", "title": "Peso: 1.0", "to": "byoc", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "grove", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "aws", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "jsonl", "value": 1.0}, {"from": "api", "title": "Peso: 2.0", "to": "biome", "value": 2.0}, {"from": "api", "title": "Peso: 1.0", "to": "mark", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "javascript", "value": 1.0}, {"from": "api", "title": "Peso: 13.0", "to": "opentelemetry", "value": 13.0}, {"from": "api", "title": "Peso: 1.0", "to": "json", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "statsig", "value": 1.0}, {"from": "api", "title": "Peso: 3.0", "to": "token", "value": 3.0}, {"from": "api", "title": "Peso: 2.0", "to": "uuid", "value": 2.0}, {"from": "api", "title": "Peso: 1.0", "to": "llm", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "fallback", "value": 1.0}, {"from": "api", "title": "Peso: 2.0", "to": "claude ssh", "value": 2.0}, {"from": "api", "title": "Peso: 3.0", "to": "cli", "value": 3.0}, {"from": "api", "title": "Peso: 1.0", "to": "env var", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "mcp http", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "non-anthropic", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "sse", "value": 1.0}, {"from": "api", "title": "Peso: 6.0", "to": "github", "value": 6.0}, {"from": "api", "title": "Peso: 1.0", "to": "ccd", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "ttl", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "payg", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "iterm2", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "bigquery", "value": 1.0}, {"from": "api", "title": "Peso: 2.0", "to": "assistantmessage", "value": 2.0}, {"from": "api", "title": "Peso: 2.0", "to": "usermessage", "value": 2.0}, {"from": "api", "title": "Peso: 1.0", "to": "java", "value": 1.0}, {"from": "api", "title": "Peso: 4.0", "to": "readme", "value": 4.0}, {"from": "api", "title": "Peso: 1.0", "to": "maxtokens", "value": 1.0}, {"from": "api", "title": "Peso: 2.0", "to": "powershell", "value": 2.0}, {"from": "api", "title": "Peso: 1.0", "to": "gitlab", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "gitlab api", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "rest", "value": 1.0}, {"from": "api", "title": "Peso: 2.0", "to": "ink", "value": 2.0}, {"from": "api", "title": "Peso: 1.0", "to": "cse", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "websocket", "value": 1.0}, {"from": "api", "title": "Peso: 1.0", "to": "react", "value": 1.0}, {"from": "api", "title": "Peso: 2.0", "to": "linux", "value": 2.0}, {"from": "api", "title": "Peso: 1.0", "to": "that", "value": 1.0}, {"from": "dce", "title": "Peso: 1.0", "to": "tsx", "value": 1.0}, {"from": "fallback", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "fallback", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "fallback", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "fallback", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "fallback", "title": "Peso: 1.0", "to": "sox", "value": 1.0}, {"from": "fallback", "title": "Peso: 1.0", "to": "statsig", "value": 1.0}, {"from": "opentelemetry", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "useimperativehandle", "title": "Peso: 2.0", "to": "react", "value": 2.0}, {"from": "useimperativehandle", "title": "Peso: 1.0", "to": "useeffect", "value": 1.0}, {"from": "useimperativehandle", "title": "Peso: 1.0", "to": "usecontext", "value": 1.0}, {"from": "useimperativehandle", "title": "Peso: 1.0", "to": "usestate", "value": 1.0}, {"from": "useimperativehandle", "title": "Peso: 1.0", "to": "ref", "value": 1.0}, {"from": "dcs", "title": "Peso: 1.0", "to": "esc", "value": 1.0}, {"from": "dcs", "title": "Peso: 1.0", "to": "terminal", "value": 1.0}, {"from": "dcs", "title": "Peso: 2.0", "to": "csi", "value": 2.0}, {"from": "dcs", "title": "Peso: 1.0", "to": "gnu", "value": 1.0}, {"from": "tooluseresult", "title": "Peso: 1.0", "to": "json", "value": 1.0}, {"from": "scrolltop", "title": "Peso: 5.0", "to": "react", "value": 5.0}, {"from": "scrolltop", "title": "Peso: 5.0", "to": "ink", "value": 5.0}, {"from": "scrolltop", "title": "Peso: 2.0", "to": "dom", "value": 2.0}, {"from": "scrolltop", "title": "Peso: 4.0", "to": "scrollbox", "value": 4.0}, {"from": "github/gitlab", "title": "Peso: 2.0", "to": "github", "value": 2.0}, {"from": "github/gitlab", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "github/gitlab", "title": "Peso: 2.0", "to": "gitlab", "value": 2.0}, {"from": "github/gitlab", "title": "Peso: 1.0", "to": "bitbucket", "value": 1.0}, {"from": "cli", "title": "Peso: 7.0", "to": "mcp", "value": 7.0}, {"from": "cli", "title": "Peso: 4.0", "to": "eslint", "value": 4.0}, {"from": "cli", "title": "Peso: 2.0", "to": "appstate", "value": 2.0}, {"from": "cli", "title": "Peso: 1.0", "to": "commander", "value": 1.0}, {"from": "cli", "title": "Peso: 2.0", "to": "oauth", "value": 2.0}, {"from": "cli", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "github", "value": 1.0}, {"from": "cli", "title": "Peso: 2.0", "to": "anthropic", "value": 2.0}, {"from": "cli", "title": "Peso: 11.0", "to": "claude", "value": 11.0}, {"from": "cli", "title": "Peso: 1.0", "to": "claude ssh", "value": 1.0}, {"from": "cli", "title": "Peso: 6.0", "to": "ccr", "value": 6.0}, {"from": "cli", "title": "Peso: 1.0", "to": "jsonrpc", "value": 1.0}, {"from": "cli", "title": "Peso: 2.0", "to": "mcp client", "value": 2.0}, {"from": "cli", "title": "Peso: 1.0", "to": "ccd", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "bashtool", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "bitbucket", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "gitlab", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "non-github", "value": 1.0}, {"from": "cli", "title": "Peso: 3.0", "to": "git", "value": 3.0}, {"from": "cli", "title": "Peso: 1.0", "to": "auth", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "env var", "value": 1.0}, {"from": "cli", "title": "Peso: 2.0", "to": "claude desktop", "value": 2.0}, {"from": "cli", "title": "Peso: 1.0", "to": "ide", "value": 1.0}, {"from": "cli", "title": "Peso: 2.0", "to": "tsx", "value": 2.0}, {"from": "cli", "title": "Peso: 1.0", "to": "that", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "biome", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "growthbook", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "node", "value": 1.0}, {"from": "cli", "title": "Peso: 1.0", "to": "websocket", "value": 1.0}, {"from": "iterm2", "title": "Peso: 1.0", "to": "terminal", "value": 1.0}, {"from": "iterm2", "title": "Peso: 1.0", "to": "alacritty", "value": 1.0}, {"from": "iterm2", "title": "Peso: 1.0", "to": "wezterm", "value": 1.0}, {"from": "csi u / kitty", "title": "Peso: 1.0", "to": "kitty", "value": 1.0}, {"from": "csi u / kitty", "title": "Peso: 1.0", "to": "wezterm", "value": 1.0}, {"from": "csi u / kitty", "title": "Peso: 1.0", "to": "warp", "value": 1.0}, {"from": "normalizedmessage", "title": "Peso: 1.0", "to": "renderablemessage", "value": 1.0}, {"from": "normalizedmessage", "title": "Peso: 1.0", "to": "messagetype", "value": 1.0}, {"from": "normalizedmessage", "title": "Peso: 1.0", "to": "progressmessage", "value": 1.0}, {"from": "bitbucket", "title": "Peso: 2.0", "to": "github", "value": 2.0}, {"from": "bitbucket", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "bitbucket", "title": "Peso: 3.0", "to": "gitlab", "value": 3.0}, {"from": "bitbucket", "title": "Peso: 1.0", "to": "non-github", "value": 1.0}, {"from": "onitemclick", "title": "Peso: 1.0", "to": "setcursor", "value": 1.0}, {"from": "onitemclick", "title": "Peso: 1.0", "to": "renderitem", "value": 1.0}, {"from": "onitemclick", "title": "Peso: 1.0", "to": "cursornavref", "value": 1.0}, {"from": "onitemclick", "title": "Peso: 1.0", "to": "setpositions", "value": 1.0}, {"from": "-js", "title": "Peso: 3.0", "to": "commander-js", "value": 3.0}, {"from": "-js", "title": "Peso: 3.0", "to": "commander", "value": 3.0}, {"from": "-js", "title": "Peso: 1.0", "to": "invalidargumenterror", "value": 1.0}, {"from": "id_token", "title": "Peso: 2.0", "to": "xaa", "value": 2.0}, {"from": "id_token", "title": "Peso: 4.0", "to": "idp", "value": 4.0}, {"from": "lrucache", "title": "Peso: 1.0", "to": "ttl", "value": 1.0}, {"from": "websocket", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "websocket", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "websocket", "title": "Peso: 2.0", "to": "claude", "value": 2.0}, {"from": "websocket", "title": "Peso: 7.0", "to": "ccr", "value": 7.0}, {"from": "websocket", "title": "Peso: 2.0", "to": "repl", "value": 2.0}, {"from": "websocket", "title": "Peso: 1.0", "to": "childprocess", "value": 1.0}, {"from": "websocket", "title": "Peso: 1.0", "to": "node", "value": 1.0}, {"from": "websocket", "title": "Peso: 5.0", "to": "dom", "value": 5.0}, {"from": "websocket", "title": "Peso: 1.0", "to": "json", "value": 1.0}, {"from": "websocket", "title": "Peso: 1.0", "to": "rpc", "value": 1.0}, {"from": "websocket", "title": "Peso: 1.0", "to": "tls", "value": 1.0}, {"from": "hooks", "title": "Peso: 1.0", "to": "filter", "value": 1.0}, {"from": "hooks", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "hooks", "title": "Peso: 3.0", "to": "hookmatcher", "value": 3.0}, {"from": "channelentry", "title": "Peso: 1.0", "to": "getusermsgoptin", "value": 1.0}, {"from": "channelentry", "title": "Peso: 2.0", "to": "setallowedchannels", "value": 2.0}, {"from": "channelentry", "title": "Peso: 1.0", "to": "setclienttype", "value": 1.0}, {"from": "channelentry", "title": "Peso: 1.0", "to": "setinlineplugins", "value": 1.0}, {"from": "channelentry", "title": "Peso: 1.0", "to": "setkairosactive", "value": 1.0}, {"from": "channelentry", "title": "Peso: 1.0", "to": "setsessionsource", "value": 1.0}, {"from": "posix", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "posix", "title": "Peso: 16.0", "to": "windows", "value": 16.0}, {"from": "posix", "title": "Peso: 2.0", "to": "wsl", "value": 2.0}, {"from": "posix", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "posix", "title": "Peso: 3.0", "to": "git", "value": 3.0}, {"from": "commandbase", "title": "Peso: 1.0", "to": "command", "value": 1.0}, {"from": "commandbase", "title": "Peso: 2.0", "to": "promptcommand", "value": 2.0}, {"from": "commandbase", "title": "Peso: 1.0", "to": "commandresultdisplay", "value": 1.0}, {"from": "-ai", "title": "Peso: 144.0", "to": "anthropic", "value": 144.0}, {"from": "-ai", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "-ai", "title": "Peso: 27.0", "to": "anthropic-ai", "value": 27.0}, {"from": "-ai", "title": "Peso: 5.0", "to": "apierror", "value": 5.0}, {"from": "-ai", "title": "Peso: 1.0", "to": "clientoptions", "value": 1.0}, {"from": "-ai", "title": "Peso: 3.0", "to": "contentblockparam", "value": 3.0}, {"from": "-ai", "title": "Peso: 1.0", "to": "textblockparam", "value": 1.0}, {"from": "-ai", "title": "Peso: 2.0", "to": "thinkingblockparam", "value": 2.0}, {"from": "-ai", "title": "Peso: 3.0", "to": "toolresultblockparam", "value": 3.0}, {"from": "grove", "title": "Peso: 1.0", "to": "uuid", "value": 1.0}, {"from": "grove", "title": "Peso: 1.0", "to": "mark", "value": 1.0}, {"from": "mcp client", "title": "Peso: 3.0", "to": "mcp", "value": 3.0}, {"from": "mcp client", "title": "Peso: 1.0", "to": "jsonrpc", "value": 1.0}, {"from": "mac", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "mac", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "normalizes", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "normalizes", "title": "Peso: 1.0", "to": "json", "value": 1.0}, {"from": "javascript", "title": "Peso: 1.0", "to": "typescript", "value": 1.0}, {"from": "eperm", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "eperm", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "eperm", "title": "Peso: 1.0", "to": "node", "value": 1.0}, {"from": "github", "title": "Peso: 4.0", "to": "mcp", "value": 4.0}, {"from": "github", "title": "Peso: 23.0", "to": "https://github", "value": 23.0}, {"from": "github", "title": "Peso: 1.0", "to": "token", "value": 1.0}, {"from": "github", "title": "Peso: 5.0", "to": "ccr", "value": 5.0}, {"from": "github", "title": "Peso: 5.0", "to": "gitlab", "value": 5.0}, {"from": "github", "title": "Peso: 1.0", "to": "non-github", "value": 1.0}, {"from": "github", "title": "Peso: 42.0", "to": "git", "value": 42.0}, {"from": "github", "title": "Peso: 4.0", "to": "claude", "value": 4.0}, {"from": "github", "title": "Peso: 3.0", "to": "anthropic", "value": 3.0}, {"from": "github", "title": "Peso: 4.0", "to": "gcs", "value": 4.0}, {"from": "github", "title": "Peso: 1.0", "to": "cachedir", "value": 1.0}, {"from": "github", "title": "Peso: 1.0", "to": "powershell", "value": 1.0}, {"from": "github", "title": "Peso: 1.0", "to": "gitlab api", "value": 1.0}, {"from": "github", "title": "Peso: 1.0", "to": "rest", "value": 1.0}, {"from": "github", "title": "Peso: 1.0", "to": "rust", "value": 1.0}, {"from": "claude desktop", "title": "Peso: 1.0", "to": "oauth", "value": 1.0}, {"from": "claude desktop", "title": "Peso: 6.0", "to": "claude", "value": 6.0}, {"from": "claude desktop", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "dom", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "dom", "title": "Peso: 4.0", "to": "react", "value": 4.0}, {"from": "dom", "title": "Peso: 8.0", "to": "ink", "value": 8.0}, {"from": "dom", "title": "Peso: 1.0", "to": "scrollbox", "value": 1.0}, {"from": "flexbox", "title": "Peso: 1.0", "to": "typescript", "value": 1.0}, {"from": "flexbox", "title": "Peso: 1.0", "to": "react", "value": 1.0}, {"from": "flexbox", "title": "Peso: 1.0", "to": "eol", "value": 1.0}, {"from": "jwt", "title": "Peso: 5.0", "to": "oauth", "value": 5.0}, {"from": "jwt", "title": "Peso: 2.0", "to": "ccr", "value": 2.0}, {"from": "jwt", "title": "Peso: 2.0", "to": "auth", "value": 2.0}, {"from": "jwt", "title": "Peso: 1.0", "to": "token", "value": 1.0}, {"from": "jwt", "title": "Peso: 1.0", "to": "ttl", "value": 1.0}, {"from": "jwt", "title": "Peso: 1.0", "to": "idp", "value": 1.0}, {"from": "jwt", "title": "Peso: 2.0", "to": "prm", "value": 2.0}, {"from": "jwt", "title": "Peso: 1.0", "to": "xaa", "value": 1.0}, {"from": "jwt", "title": "Peso: 1.0", "to": "terminal", "value": 1.0}, {"from": "compute", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "compute", "title": "Peso: 1.0", "to": "oauth", "value": 1.0}, {"from": "compute", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "compute", "title": "Peso: 1.0", "to": "utc", "value": 1.0}, {"from": "claude ssh", "title": "Peso: 15.0", "to": "claude", "value": 15.0}, {"from": "claude ssh", "title": "Peso: 1.0", "to": "env var", "value": 1.0}, {"from": "claude ssh", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "renderitem", "title": "Peso: 1.0", "to": "setcursor", "value": 1.0}, {"from": "renderitem", "title": "Peso: 1.0", "to": "cursornavref", "value": 1.0}, {"from": "renderitem", "title": "Peso: 1.0", "to": "setpositions", "value": 1.0}, {"from": "claude_code_oauth_token", "title": "Peso: 1.0", "to": "oauth", "value": 1.0}, {"from": "claude_code_oauth_token", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "claude_code_oauth_token", "title": "Peso: 1.0", "to": "auth", "value": 1.0}, {"from": "claude_code_oauth_token", "title": "Peso: 1.0", "to": "ccd", "value": 1.0}, {"from": "applescript", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "applescript", "title": "Peso: 1.0", "to": "terminal", "value": 1.0}, {"from": "applescript", "title": "Peso: 1.0", "to": "iterm", "value": 1.0}, {"from": "messageactionsnav", "title": "Peso: 3.0", "to": "messageactionsstate", "value": 3.0}, {"from": "messageactionsnav", "title": "Peso: 1.0", "to": "messageactioncaps", "value": 1.0}, {"from": "messageactionsnav", "title": "Peso: 1.0", "to": "messageactionsbar", "value": 1.0}, {"from": "messageactionsnav", "title": "Peso: 1.0", "to": "messageactionskeybindings", "value": 1.0}, {"from": "alsa", "title": "Peso: 2.0", "to": "linux", "value": 2.0}, {"from": "alsa", "title": "Peso: 2.0", "to": "sox", "value": 2.0}, {"from": "refobject", "title": "Peso: 9.0", "to": "react", "value": 9.0}, {"from": "refobject", "title": "Peso: 1.0", "to": "reactnode", "value": 1.0}, {"from": "refobject", "title": "Peso: 2.0", "to": "usecallback", "value": 2.0}, {"from": "refobject", "title": "Peso: 1.0", "to": "useeffect", "value": 1.0}, {"from": "refobject", "title": "Peso: 1.0", "to": "usecontext", "value": 1.0}, {"from": "refobject", "title": "Peso: 2.0", "to": "usestate", "value": 2.0}, {"from": "refobject", "title": "Peso: 1.0", "to": "usedeferredvalue", "value": 1.0}, {"from": "for", "title": "Peso: 1.0", "to": "lodash", "value": 1.0}, {"from": "for", "title": "Peso: 1.0", "to": "suffix", "value": 1.0}, {"from": "for", "title": "Peso: 1.0", "to": "powershell", "value": 1.0}, {"from": "numallowedtools", "title": "Peso: 1.0", "to": "hasstdin", "value": 1.0}, {"from": "numallowedtools", "title": "Peso: 1.0", "to": "mcpclientcount", "value": 1.0}, {"from": "numallowedtools", "title": "Peso: 1.0", "to": "systempromptflag", "value": 1.0}, {"from": "react", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "react", "title": "Peso: 42.0", "to": "eslint", "value": 42.0}, {"from": "react", "title": "Peso: 4.0", "to": "appstate", "value": 4.0}, {"from": "react", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "react", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "react", "title": "Peso: 3.0", "to": "repl", "value": 3.0}, {"from": "react", "title": "Peso: 44.0", "to": "reactnode", "value": 44.0}, {"from": "react", "title": "Peso: 13.0", "to": "ink", "value": 13.0}, {"from": "react", "title": "Peso: 5.0", "to": "tsx", "value": 5.0}, {"from": "react", "title": "Peso: 122.0", "to": "usecallback", "value": 122.0}, {"from": "react", "title": "Peso: 75.0", "to": "useeffect", "value": 75.0}, {"from": "react", "title": "Peso: 12.0", "to": "usecontext", "value": 12.0}, {"from": "react", "title": "Peso: 2.0", "to": "ansi", "value": 2.0}, {"from": "react", "title": "Peso: 2.0", "to": "sync", "value": 2.0}, {"from": "react", "title": "Peso: 1.0", "to": "als", "value": 1.0}, {"from": "react", "title": "Peso: 8.0", "to": "usestate", "value": 8.0}, {"from": "react", "title": "Peso: 2.0", "to": "usedeferredvalue", "value": 2.0}, {"from": "react", "title": "Peso: 1.0", "to": "memoized", "value": 1.0}, {"from": "react", "title": "Peso: 1.0", "to": "themeprovider", "value": 1.0}, {"from": "react", "title": "Peso: 2.0", "to": "ref", "value": 2.0}, {"from": "react", "title": "Peso: 1.0", "to": "usestdin", "value": 1.0}, {"from": "react", "title": "Peso: 1.0", "to": "scrollbox", "value": 1.0}, {"from": "memoized", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "memoized", "title": "Peso: 1.0", "to": "growthbook", "value": 1.0}, {"from": "memoized", "title": "Peso: 1.0", "to": "ttl", "value": 1.0}, {"from": "memoized", "title": "Peso: 1.0", "to": "useeffect", "value": 1.0}, {"from": "memoized", "title": "Peso: 1.0", "to": "promptinput", "value": 1.0}, {"from": "progressmessage", "title": "Peso: 2.0", "to": "assistantmessage", "value": 2.0}, {"from": "progressmessage", "title": "Peso: 2.0", "to": "usermessage", "value": 2.0}, {"from": "progressmessage", "title": "Peso: 2.0", "to": "attachmentmessage", "value": 2.0}, {"from": "progressmessage", "title": "Peso: 1.0", "to": "renderablemessage", "value": 1.0}, {"from": "progressmessage", "title": "Peso: 2.0", "to": "messagetype", "value": 2.0}, {"from": "progressmessage", "title": "Peso: 1.0", "to": "systemmessage", "value": 1.0}, {"from": "sync", "title": "Peso: 1.0", "to": "typescript", "value": 1.0}, {"from": "sync", "title": "Peso: 5.0", "to": "appstate", "value": 5.0}, {"from": "sync", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "sync", "title": "Peso: 1.0", "to": "powershell", "value": 1.0}, {"from": "sync", "title": "Peso: 1.0", "to": "attachmentmessage", "value": 1.0}, {"from": "ref", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "ref", "title": "Peso: 1.0", "to": "usecallback", "value": 1.0}, {"from": "ref", "title": "Peso: 1.0", "to": "useeffect", "value": 1.0}, {"from": "messagetype", "title": "Peso: 1.0", "to": "usermessage", "value": 1.0}, {"from": "messagetype", "title": "Peso: 1.0", "to": "renderablemessage", "value": 1.0}, {"from": "messageactionskeybindings", "title": "Peso: 1.0", "to": "messageactionsstate", "value": 1.0}, {"from": "messageactionskeybindings", "title": "Peso: 1.0", "to": "messageactioncaps", "value": 1.0}, {"from": "messageactionskeybindings", "title": "Peso: 1.0", "to": "messageactionsbar", "value": 1.0}, {"from": "tsx", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "tsx", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "tsx", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "tsx", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "tsx", "title": "Peso: 3.0", "to": "ink", "value": 3.0}, {"from": "tsx", "title": "Peso: 1.0", "to": "scopedmcpserverconfig", "value": 1.0}, {"from": "/usr", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "/usr", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "/usr", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "maxtokens", "title": "Peso: 1.0", "to": "growthbook", "value": 1.0}, {"from": "usecallback", "title": "Peso: 2.0", "to": "repl", "value": 2.0}, {"from": "usecallback", "title": "Peso: 7.0", "to": "reactnode", "value": 7.0}, {"from": "usecallback", "title": "Peso: 55.0", "to": "useeffect", "value": 55.0}, {"from": "usecallback", "title": "Peso: 1.0", "to": "usedeferredvalue", "value": 1.0}, {"from": "usecallback", "title": "Peso: 4.0", "to": "usestate", "value": 4.0}, {"from": "usecallback", "title": "Peso: 1.0", "to": "promptinput", "value": 1.0}, {"from": "usecallback", "title": "Peso: 1.0", "to": "onimagepaste", "value": 1.0}, {"from": "usecallback", "title": "Peso: 3.0", "to": "usecontext", "value": 3.0}, {"from": "usecallback", "title": "Peso: 1.0", "to": "setmessages", "value": 1.0}, {"from": "unc", "title": "Peso: 3.0", "to": "windows", "value": 3.0}, {"from": "unc", "title": "Peso: 1.0", "to": "wsl", "value": 1.0}, {"from": "unc", "title": "Peso: 8.0", "to": "ntlm", "value": 8.0}, {"from": "unc", "title": "Peso: 2.0", "to": "powershell", "value": 2.0}, {"from": "command", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "command", "title": "Peso: 1.0", "to": "promptcommand", "value": 1.0}, {"from": "command", "title": "Peso: 1.0", "to": "commandresultdisplay", "value": 1.0}, {"from": "scrollbox", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "scrollbox", "title": "Peso: 14.0", "to": "ink", "value": 14.0}, {"from": "scrollbox", "title": "Peso: 1.0", "to": "rest", "value": 1.0}, {"from": "agenttool", "title": "Peso: 1.0", "to": "esc", "value": 1.0}, {"from": "cursor", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "cursor", "title": "Peso: 2.0", "to": "windsurf", "value": 2.0}, {"from": "messageactionsstate", "title": "Peso: 1.0", "to": "messageactioncaps", "value": 1.0}, {"from": "messageactionsstate", "title": "Peso: 1.0", "to": "messageactionsbar", "value": 1.0}, {"from": "setpositions", "title": "Peso: 1.0", "to": "setcursor", "value": 1.0}, {"from": "setpositions", "title": "Peso: 1.0", "to": "cursornavref", "value": 1.0}, {"from": "anthropic-ai", "title": "Peso: 27.0", "to": "anthropic", "value": 27.0}, {"from": "anthropic-ai", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "anthropic-ai", "title": "Peso: 5.0", "to": "apierror", "value": 5.0}, {"from": "anthropic-ai", "title": "Peso: 1.0", "to": "clientoptions", "value": 1.0}, {"from": "anthropic-ai", "title": "Peso: 1.0", "to": "contentblockparam", "value": 1.0}, {"from": "cupermissionrequest", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "cupermissionrequest", "title": "Peso: 1.0", "to": "ant", "value": 1.0}, {"from": "cupermissionrequest", "title": "Peso: 1.0", "to": "cucalltoolresult", "value": 1.0}, {"from": "cupermissionrequest", "title": "Peso: 1.0", "to": "cupermissionresponse", "value": 1.0}, {"from": "cupermissionrequest", "title": "Peso: 1.0", "to": "screenshotdims", "value": 1.0}, {"from": "lodash", "title": "Peso: 125.0", "to": "lodash-es", "value": 125.0}, {"from": "lodash", "title": "Peso: 1.0", "to": "eslint", "value": 1.0}, {"from": "macos/linux", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "macos/linux", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "macos/linux", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "macos/linux", "title": "Peso: 1.0", "to": "sox", "value": 1.0}, {"from": "eslint", "title": "Peso: 1.0", "to": "lodash-es", "value": 1.0}, {"from": "eslint", "title": "Peso: 301.0", "to": "typescript", "value": 301.0}, {"from": "eslint", "title": "Peso: 3.0", "to": "ink", "value": 3.0}, {"from": "eslint", "title": "Peso: 1.0", "to": "rest", "value": 1.0}, {"from": "eslint", "title": "Peso: 3.0", "to": "ccr", "value": 3.0}, {"from": "eslint", "title": "Peso: 1.0", "to": "shell", "value": 1.0}, {"from": "eslint", "title": "Peso: 1.0", "to": "esc", "value": 1.0}, {"from": "eslint", "title": "Peso: 2.0", "to": "repl", "value": 2.0}, {"from": "warp", "title": "Peso: 1.0", "to": "kitty", "value": 1.0}, {"from": "warp", "title": "Peso: 1.0", "to": "wezterm", "value": 1.0}, {"from": "assistantmessage", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "assistantmessage", "title": "Peso: 6.0", "to": "usermessage", "value": 6.0}, {"from": "assistantmessage", "title": "Peso: 2.0", "to": "attachmentmessage", "value": 2.0}, {"from": "assistantmessage", "title": "Peso: 1.0", "to": "systemmessage", "value": 1.0}, {"from": "mcpclients", "title": "Peso: 2.0", "to": "tasklistid", "value": 2.0}, {"from": "homebrew", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "homebrew", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "homebrew", "title": "Peso: 2.0", "to": "claude", "value": 2.0}, {"from": "homebrew", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "mcpclientcount", "title": "Peso: 1.0", "to": "hasstdin", "value": 1.0}, {"from": "mcpclientcount", "title": "Peso: 1.0", "to": "systempromptflag", "value": 1.0}, {"from": "setcursor", "title": "Peso: 1.0", "to": "cursornavref", "value": 1.0}, {"from": "argv0", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "argv0", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "argv0", "title": "Peso: 1.0", "to": "that", "value": 1.0}, {"from": "linux/macos", "title": "Peso: 10.0", "to": "macos", "value": 10.0}, {"from": "linux/macos", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "linux/macos", "title": "Peso: 10.0", "to": "linux", "value": 10.0}, {"from": "linux/macos", "title": "Peso: 1.0", "to": "ntfs", "value": 1.0}, {"from": "linux/macos", "title": "Peso: 1.0", "to": "sandbox", "value": 1.0}, {"from": "linux/macos", "title": "Peso: 1.0", "to": "powershell", "value": 1.0}, {"from": "llmspan", "title": "Peso: 1.0", "to": "prenormalizedmodel", "value": 1.0}, {"from": "llmspan", "title": "Peso: 1.0", "to": "previousrequestid", "value": 1.0}, {"from": "llmspan", "title": "Peso: 1.0", "to": "globalcachestrategy, requestsetupms", "value": 1.0}, {"from": "sse", "title": "Peso: 4.0", "to": "mcp", "value": 4.0}, {"from": "sse", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "sse", "title": "Peso: 3.0", "to": "ccr", "value": 3.0}, {"from": "sse", "title": "Peso: 1.0", "to": "mcp http", "value": 1.0}, {"from": "sse", "title": "Peso: 1.0", "to": "non-anthropic", "value": 1.0}, {"from": "promptinput", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "promptinput", "title": "Peso: 1.0", "to": "useeffect", "value": 1.0}, {"from": "promptinput", "title": "Peso: 1.0", "to": "usekeybindings", "value": 1.0}, {"from": "mark", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "darwin", "title": "Peso: 2.0", "to": "macos", "value": 2.0}, {"from": "darwin", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "darwin", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "setkairosactive", "title": "Peso: 1.0", "to": "getusermsgoptin", "value": 1.0}, {"from": "setkairosactive", "title": "Peso: 1.0", "to": "setallowedchannels", "value": 1.0}, {"from": "setkairosactive", "title": "Peso: 1.0", "to": "setclienttype", "value": 1.0}, {"from": "setkairosactive", "title": "Peso: 1.0", "to": "setinlineplugins", "value": 1.0}, {"from": "setkairosactive", "title": "Peso: 1.0", "to": "setsessionsource", "value": 1.0}, {"from": "clientoptions", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "gnu", "title": "Peso: 1.0", "to": "jetbrains", "value": 1.0}, {"from": "foundry", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "foundry", "title": "Peso: 1.0", "to": "growthbook", "value": 1.0}, {"from": "microsoft", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "microsoft", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "microsoft", "title": "Peso: 1.0", "to": "wsl1", "value": 1.0}, {"from": "microsoft", "title": "Peso: 1.0", "to": "wsl", "value": 1.0}, {"from": "sighup", "title": "Peso: 1.0", "to": "sigint", "value": 1.0}, {"from": "sighup", "title": "Peso: 1.0", "to": "terminal", "value": 1.0}, {"from": "sighup", "title": "Peso: 1.0", "to": "sigterm", "value": 1.0}, {"from": "linux/windows", "title": "Peso: 4.0", "to": "windows", "value": 4.0}, {"from": "linux/windows", "title": "Peso: 4.0", "to": "linux", "value": 4.0}, {"from": "linux/windows", "title": "Peso: 3.0", "to": "jetbrains", "value": 3.0}, {"from": "rgb", "title": "Peso: 5.0", "to": "ansi", "value": 5.0}, {"from": "byoc", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "scopedmcpserverconfig", "title": "Peso: 1.0", "to": "serverresource", "value": 1.0}, {"from": "skill", "title": "Peso: 1.0", "to": "mcp", "value": 1.0}, {"from": "skill", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "messagesforapi", "title": "Peso: 1.0", "to": "tooluseid", "value": 1.0}, {"from": "zod", "title": "Peso: 2.0", "to": "mcp", "value": 2.0}, {"from": "zod", "title": "Peso: 2.0", "to": "anthropic", "value": 2.0}, {"from": "zod", "title": "Peso: 1.0", "to": "bash", "value": 1.0}, {"from": "zod", "title": "Peso: 1.0", "to": "llm", "value": 1.0}, {"from": "zod", "title": "Peso: 1.0", "to": "hookmatcher", "value": 1.0}, {"from": "zod", "title": "Peso: 3.0", "to": "json", "value": 3.0}, {"from": "mcp", "title": "Peso: 3.0", "to": "filter", "value": 3.0}, {"from": "mcp", "title": "Peso: 3.0", "to": "@param mcptools", "value": 3.0}, {"from": "mcp", "title": "Peso: 4.0", "to": "appstate", "value": 4.0}, {"from": "mcp", "title": "Peso: 35.0", "to": "claude", "value": 35.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "mcp", "title": "Peso: 2.0", "to": "repl", "value": 2.0}, {"from": "mcp", "title": "Peso: 10.0", "to": "auth", "value": 10.0}, {"from": "mcp", "title": "Peso: 8.0", "to": "claude mcp", "value": 8.0}, {"from": "mcp", "title": "Peso: 3.0", "to": "git", "value": 3.0}, {"from": "mcp", "title": "Peso: 9.0", "to": "ide", "value": 9.0}, {"from": "mcp", "title": "Peso: 2.0", "to": "@param", "value": 2.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "pii", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "jsonrpc", "value": 1.0}, {"from": "mcp", "title": "Peso: 5.0", "to": "oauth", "value": 5.0}, {"from": "mcp", "title": "Peso: 3.0", "to": "idp", "value": 3.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "https://github", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "typescript", "value": 1.0}, {"from": "mcp", "title": "Peso: 3.0", "to": "xaa", "value": 3.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "mcp", "title": "Peso: 2.0", "to": "suffix", "value": 2.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "ink", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "java", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "java mcp sdk", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "spring ai", "value": 1.0}, {"from": "mcp", "title": "Peso: 3.0", "to": "mcp sdk", "value": 3.0}, {"from": "mcp", "title": "Peso: 4.0", "to": "anthropic", "value": 4.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "mcp http", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "non-anthropic", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "plugin@marketplace", "value": 1.0}, {"from": "mcp", "title": "Peso: 2.0", "to": "json", "value": 2.0}, {"from": "mcp", "title": "Peso: 9.0", "to": "ant", "value": 9.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "cucalltoolresult", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "cupermissionresponse", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "screenshotdims", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "ttl", "value": 1.0}, {"from": "mcp", "title": "Peso: 2.0", "to": "datadog", "value": 2.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "aws", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "bash", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "commander", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "slack", "value": 1.0}, {"from": "mcp", "title": "Peso: 1.0", "to": "serverresource", "value": 1.0}, {"from": "google-auth-library", "title": "Peso: 1.0", "to": "aws", "value": 1.0}, {"from": "google-auth-library", "title": "Peso: 1.0", "to": "googleauth", "value": 1.0}, {"from": "google-auth-library", "title": "Peso: 1.0", "to": "adc", "value": 1.0}, {"from": "hasstdin", "title": "Peso: 1.0", "to": "systempromptflag", "value": 1.0}, {"from": "aws", "title": "Peso: 1.0", "to": "apierror", "value": 1.0}, {"from": "esc", "title": "Peso: 1.0", "to": "auth", "value": 1.0}, {"from": "esc", "title": "Peso: 1.0", "to": "kitty", "value": 1.0}, {"from": "esc", "title": "Peso: 1.0", "to": "@param", "value": 1.0}, {"from": "esc", "title": "Peso: 2.0", "to": "queued", "value": 2.0}, {"from": "esc", "title": "Peso: 1.0", "to": "idp", "value": 1.0}, {"from": "esc", "title": "Peso: 1.0", "to": "useinput", "value": 1.0}, {"from": "esc", "title": "Peso: 3.0", "to": "sgr", "value": 3.0}, {"from": "esc", "title": "Peso: 4.0", "to": "csi", "value": 4.0}, {"from": "biome", "title": "Peso: 1.0", "to": "oauth", "value": 1.0}, {"from": "biome", "title": "Peso: 1.0", "to": "promise", "value": 1.0}, {"from": "getbranch", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "globalcachestrategy, requestsetupms", "title": "Peso: 1.0", "to": "prenormalizedmodel", "value": 1.0}, {"from": "globalcachestrategy, requestsetupms", "title": "Peso: 1.0", "to": "previousrequestid", "value": 1.0}, {"from": "typescript", "title": "Peso: 9.0", "to": "claude", "value": 9.0}, {"from": "typescript", "title": "Peso: 2.0", "to": "rust", "value": 2.0}, {"from": "typescript", "title": "Peso: 2.0", "to": "readme", "value": 2.0}, {"from": "typescript", "title": "Peso: 1.0", "to": "attachmentmessage", "value": 1.0}, {"from": "typescript", "title": "Peso: 1.0", "to": "ide", "value": 1.0}, {"from": "axios", "title": "Peso: 3.0", "to": "oauth", "value": 3.0}, {"from": "axios", "title": "Peso: 1.0", "to": "auth", "value": 1.0}, {"from": "axios", "title": "Peso: 2.0", "to": "node", "value": 2.0}, {"from": "chrome", "title": "Peso: 1.0", "to": "oauth", "value": 1.0}, {"from": "chrome", "title": "Peso: 7.0", "to": "claude", "value": 7.0}, {"from": "chrome", "title": "Peso: 1.0", "to": "rpc", "value": 1.0}, {"from": "pacman", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "wsl", "title": "Peso: 3.0", "to": "macos", "value": 3.0}, {"from": "wsl", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "wsl", "title": "Peso: 22.0", "to": "windows", "value": 22.0}, {"from": "wsl", "title": "Peso: 1.0", "to": "ide", "value": 1.0}, {"from": "wsl", "title": "Peso: 7.0", "to": "linux", "value": 7.0}, {"from": "wsl", "title": "Peso: 2.0", "to": "sox", "value": 2.0}, {"from": "wsl", "title": "Peso: 1.0", "to": "wsl1", "value": 1.0}, {"from": "wsl", "title": "Peso: 1.0", "to": "windsurf", "value": 1.0}, {"from": "wsl", "title": "Peso: 1.0", "to": "docker", "value": 1.0}, {"from": "wsl", "title": "Peso: 1.0", "to": "terminal", "value": 1.0}, {"from": "appstate", "title": "Peso: 2.0", "to": "@param mcptools", "value": 2.0}, {"from": "appstate", "title": "Peso: 1.0", "to": "env var", "value": 1.0}, {"from": "appstate", "title": "Peso: 1.0", "to": "setappstate", "value": 1.0}, {"from": "appstate", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "appstate", "title": "Peso: 1.0", "to": "queued", "value": 1.0}, {"from": "sandbox", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "sandbox", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "sandbox", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "sandbox", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "sandbox", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "oauth", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "oauth", "title": "Peso: 1.0", "to": "startkeychainprefetch", "value": 1.0}, {"from": "oauth", "title": "Peso: 17.0", "to": "claude", "value": 17.0}, {"from": "oauth", "title": "Peso: 6.0", "to": "ccr", "value": 6.0}, {"from": "oauth", "title": "Peso: 5.0", "to": "uuid", "value": 5.0}, {"from": "oauth", "title": "Peso: 7.0", "to": "auth", "value": 7.0}, {"from": "oauth", "title": "Peso: 1.0", "to": "slack", "value": 1.0}, {"from": "oauth", "title": "Peso: 1.0", "to": "tls", "value": 1.0}, {"from": "oauth", "title": "Peso: 2.0", "to": "@param", "value": 2.0}, {"from": "oauth", "title": "Peso: 7.0", "to": "anthropic", "value": 7.0}, {"from": "oauth", "title": "Peso: 1.0", "to": "claude cli", "value": 1.0}, {"from": "oauth", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "oauth", "title": "Peso: 1.0", "to": "repl", "value": 1.0}, {"from": "oauth", "title": "Peso: 1.0", "to": "replbridge", "value": 1.0}, {"from": "da1", "title": "Peso: 2.0", "to": "terminal", "value": 2.0}, {"from": "da1", "title": "Peso: 2.0", "to": "csi", "value": 2.0}, {"from": "startkeychainprefetch", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "terminal", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "terminal", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "terminal", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "terminal", "title": "Peso: 2.0", "to": "iterm", "value": 2.0}, {"from": "terminal", "title": "Peso: 3.0", "to": "csi", "value": 3.0}, {"from": "bigquery", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "usestate", "title": "Peso: 1.0", "to": "reactnode", "value": 1.0}, {"from": "usestate", "title": "Peso: 3.0", "to": "useeffect", "value": 3.0}, {"from": "usestate", "title": "Peso: 2.0", "to": "usecontext", "value": 2.0}, {"from": "usestate", "title": "Peso: 1.0", "to": "usedeferredvalue", "value": 1.0}, {"from": "gitlab api", "title": "Peso: 1.0", "to": "gitlab", "value": 1.0}, {"from": "gitlab api", "title": "Peso: 1.0", "to": "rest", "value": 1.0}, {"from": "dns", "title": "Peso: 2.0", "to": "windows", "value": 2.0}, {"from": "dns", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "dns", "title": "Peso: 1.0", "to": "ntlm", "value": 1.0}, {"from": "claude mcp", "title": "Peso: 8.0", "to": "claude", "value": 8.0}, {"from": "claude mcp", "title": "Peso: 1.0", "to": "idp", "value": 1.0}, {"from": "claude mcp", "title": "Peso: 1.0", "to": "xaa", "value": 1.0}, {"from": "screenshotdims", "title": "Peso: 1.0", "to": "ant", "value": 1.0}, {"from": "screenshotdims", "title": "Peso: 1.0", "to": "cucalltoolresult", "value": 1.0}, {"from": "screenshotdims", "title": "Peso: 1.0", "to": "cupermissionresponse", "value": 1.0}, {"from": "apierror", "title": "Peso: 5.0", "to": "anthropic", "value": 5.0}, {"from": "apierror", "title": "Peso: 1.0", "to": "json", "value": 1.0}, {"from": "usedeferredvalue", "title": "Peso: 1.0", "to": "useeffect", "value": 1.0}, {"from": "usekeybindings", "title": "Peso: 2.0", "to": "useinput", "value": 2.0}, {"from": "usekeybindings", "title": "Peso: 1.0", "to": "shift+tab", "value": 1.0}, {"from": "setinlineplugins", "title": "Peso: 1.0", "to": "getusermsgoptin", "value": 1.0}, {"from": "setinlineplugins", "title": "Peso: 1.0", "to": "setallowedchannels", "value": 1.0}, {"from": "setinlineplugins", "title": "Peso: 1.0", "to": "setclienttype", "value": 1.0}, {"from": "setinlineplugins", "title": "Peso: 1.0", "to": "setsessionsource", "value": 1.0}, {"from": "wsl1", "title": "Peso: 1.0", "to": "macos", "value": 1.0}, {"from": "wsl1", "title": "Peso: 2.0", "to": "linux", "value": 2.0}, {"from": "repl", "title": "Peso: 1.0", "to": "bash", "value": 1.0}, {"from": "repl", "title": "Peso: 4.0", "to": "claude", "value": 4.0}, {"from": "repl", "title": "Peso: 4.0", "to": "ccr", "value": 4.0}, {"from": "repl", "title": "Peso: 1.0", "to": "ink", "value": 1.0}, {"from": "repl", "title": "Peso: 1.0", "to": "microtask", "value": 1.0}, {"from": "repl", "title": "Peso: 1.0", "to": "pid", "value": 1.0}, {"from": "repl", "title": "Peso: 1.0", "to": "setmessages", "value": 1.0}, {"from": "repl", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "repl", "title": "Peso: 1.0", "to": "that", "value": 1.0}, {"from": "kitty", "title": "Peso: 1.0", "to": "wezterm", "value": 1.0}, {"from": "kitty", "title": "Peso: 3.0", "to": "csi", "value": 3.0}, {"from": "buffer", "title": "Peso: 1.0", "to": "@param", "value": 1.0}, {"from": "buffer", "title": "Peso: 1.0", "to": "utf-8", "value": 1.0}, {"from": "buffer", "title": "Peso: 1.0", "to": "jsonl", "value": 1.0}, {"from": "replbridge", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "stringconstant", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "systemmessage", "title": "Peso: 1.0", "to": "usermessage", "value": 1.0}, {"from": "systemmessage", "title": "Peso: 2.0", "to": "attachmentmessage", "value": 2.0}, {"from": "messageactioncaps", "title": "Peso: 1.0", "to": "messageactionsbar", "value": 1.0}, {"from": "ccd", "title": "Peso: 2.0", "to": "claude", "value": 2.0}, {"from": "ccd", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "mcp http", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "mcp http", "title": "Peso: 1.0", "to": "non-anthropic", "value": 1.0}, {"from": "ansi", "title": "Peso: 2.0", "to": "ink", "value": 2.0}, {"from": "ansi", "title": "Peso: 1.0", "to": "domelement", "value": 1.0}, {"from": "commander", "title": "Peso: 3.0", "to": "commander-js", "value": 3.0}, {"from": "commander", "title": "Peso: 1.0", "to": "invalidargumenterror", "value": 1.0}, {"from": "connectortextblockcount", "title": "Peso: 1.0", "to": "prenormalizedmodel", "value": 1.0}, {"from": "connectortextblockcount", "title": "Peso: 1.0", "to": "previousrequestid", "value": 1.0}, {"from": "ink", "title": "Peso: 2.0", "to": "macos", "value": 2.0}, {"from": "ink", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "ink", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "ink", "title": "Peso: 1.0", "to": "csi", "value": 1.0}, {"from": "ink", "title": "Peso: 2.0", "to": "useeffect", "value": 2.0}, {"from": "ink", "title": "Peso: 2.0", "to": "rest", "value": 2.0}, {"from": "ink", "title": "Peso: 1.0", "to": "eol", "value": 1.0}, {"from": "ink", "title": "Peso: 1.0", "to": "convert", "value": 1.0}, {"from": "ink", "title": "Peso: 1.0", "to": "domelement", "value": 1.0}, {"from": "ink", "title": "Peso: 1.0", "to": "useinput", "value": 1.0}, {"from": "ink", "title": "Peso: 1.0", "to": "microtask", "value": 1.0}, {"from": "tcc", "title": "Peso: 4.0", "to": "macos", "value": 4.0}, {"from": "setsessionsource", "title": "Peso: 1.0", "to": "getusermsgoptin", "value": 1.0}, {"from": "setsessionsource", "title": "Peso: 1.0", "to": "setallowedchannels", "value": 1.0}, {"from": "setsessionsource", "title": "Peso: 1.0", "to": "setclienttype", "value": 1.0}, {"from": "usermessage", "title": "Peso: 1.0", "to": "uuid", "value": 1.0}, {"from": "usermessage", "title": "Peso: 2.0", "to": "attachmentmessage", "value": 2.0}, {"from": "filter", "title": "Peso: 1.0", "to": "plugin@marketplace", "value": 1.0}, {"from": "filter", "title": "Peso: 1.0", "to": "hookmatcher", "value": 1.0}, {"from": "shift+tab", "title": "Peso: 2.0", "to": "windows", "value": 2.0}, {"from": "allowlist", "title": "Peso: 1.0", "to": "growthbook", "value": 1.0}, {"from": "allowlist", "title": "Peso: 2.0", "to": "env var", "value": 2.0}, {"from": "allowlist", "title": "Peso: 1.0", "to": "powershell", "value": 1.0}, {"from": "allowlist", "title": "Peso: 1.0", "to": "promptcommand", "value": 1.0}, {"from": "thinkingblockparam", "title": "Peso: 2.0", "to": "anthropic", "value": 2.0}, {"from": "thinkingblockparam", "title": "Peso: 1.0", "to": "textblockparam", "value": 1.0}, {"from": "thinkingblockparam", "title": "Peso: 1.0", "to": "toolresultblockparam", "value": 1.0}, {"from": "idp", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "idp", "title": "Peso: 1.0", "to": "auth", "value": 1.0}, {"from": "idp", "title": "Peso: 4.0", "to": "xaa", "value": 4.0}, {"from": "ttl", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "ttl", "title": "Peso: 2.0", "to": "growthbook", "value": 2.0}, {"from": "ttl", "title": "Peso: 1.0", "to": "gcs", "value": 1.0}, {"from": "cupermissionresponse", "title": "Peso: 1.0", "to": "ant", "value": 1.0}, {"from": "cupermissionresponse", "title": "Peso: 1.0", "to": "cucalltoolresult", "value": 1.0}, {"from": "iterm", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "utc", "title": "Peso: 1.0", "to": "ccr", "value": 1.0}, {"from": "uri", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "growthbook", "title": "Peso: 3.0", "to": "ccr", "value": 3.0}, {"from": "growthbook", "title": "Peso: 6.0", "to": "auth", "value": 6.0}, {"from": "growthbook", "title": "Peso: 1.0", "to": "@param", "value": 1.0}, {"from": "growthbook", "title": "Peso: 4.0", "to": "statsig", "value": 4.0}, {"from": "growthbook", "title": "Peso: 1.0", "to": "uuid", "value": 1.0}, {"from": "growthbook", "title": "Peso: 1.0", "to": "cse", "value": 1.0}, {"from": "uuid", "title": "Peso: 2.0", "to": "jsonl", "value": 2.0}, {"from": "commandresultdisplay", "title": "Peso: 1.0", "to": "promptcommand", "value": 1.0}, {"from": "shell", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "shell", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "shell", "title": "Peso: 1.0", "to": "bashtool", "value": 1.0}, {"from": "token", "title": "Peso: 1.0", "to": "auth", "value": 1.0}, {"from": "claude cli", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "claude cli", "title": "Peso: 12.0", "to": "claude", "value": 12.0}, {"from": "claude cli", "title": "Peso: 1.0", "to": "that", "value": 1.0}, {"from": "queued", "title": "Peso: 1.0", "to": "microtask", "value": 1.0}, {"from": "attachmentmessage", "title": "Peso: 1.0", "to": "renderablemessage", "value": 1.0}, {"from": "rpc", "title": "Peso: 1.0", "to": "ide", "value": 1.0}, {"from": "rpc", "title": "Peso: 3.0", "to": "json", "value": 3.0}, {"from": "macos", "title": "Peso: 6.0", "to": "claude", "value": 6.0}, {"from": "macos", "title": "Peso: 38.0", "to": "linux", "value": 38.0}, {"from": "macos", "title": "Peso: 15.0", "to": "windows", "value": 15.0}, {"from": "macos", "title": "Peso: 3.0", "to": "sox", "value": 3.0}, {"from": "macos", "title": "Peso: 3.0", "to": "jetbrains", "value": 3.0}, {"from": "macos", "title": "Peso: 1.0", "to": "sigkill", "value": 1.0}, {"from": "macos", "title": "Peso: 1.0", "to": "ntfs", "value": 1.0}, {"from": "macos", "title": "Peso: 1.0", "to": "alacritty", "value": 1.0}, {"from": "macos", "title": "Peso: 1.0", "to": "wezterm", "value": 1.0}, {"from": "macos", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "macos", "title": "Peso: 1.0", "to": "powershell", "value": 1.0}, {"from": "macos", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "env var", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "ntfs", "title": "Peso: 2.0", "to": "windows", "value": 2.0}, {"from": "ntfs", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "cachedir", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "sigint", "title": "Peso: 1.0", "to": "docker", "value": 1.0}, {"from": "sigint", "title": "Peso: 1.0", "to": "sigterm", "value": 1.0}, {"from": "auth", "title": "Peso: 5.0", "to": "claude", "value": 5.0}, {"from": "auth", "title": "Peso: 3.0", "to": "ccr", "value": 3.0}, {"from": "auth", "title": "Peso: 1.0", "to": "claudecodeinternalevent", "value": 1.0}, {"from": "bashtool", "title": "Peso: 3.0", "to": "git", "value": 3.0}, {"from": "java mcp sdk", "title": "Peso: 1.0", "to": "java", "value": 1.0}, {"from": "java mcp sdk", "title": "Peso: 1.0", "to": "spring ai", "value": 1.0}, {"from": "that", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "that", "title": "Peso: 1.0", "to": "pid", "value": 1.0}, {"from": "suffix", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "usecontext", "title": "Peso: 2.0", "to": "reactnode", "value": 2.0}, {"from": "usecontext", "title": "Peso: 5.0", "to": "useeffect", "value": 5.0}, {"from": "ide", "title": "Peso: 3.0", "to": "claude", "value": 3.0}, {"from": "ide", "title": "Peso: 2.0", "to": "windows", "value": 2.0}, {"from": "ide", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "ide", "title": "Peso: 2.0", "to": "@param", "value": 2.0}, {"from": "ide", "title": "Peso: 1.0", "to": "gcs", "value": 1.0}, {"from": "sigkill", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "sigkill", "title": "Peso: 1.0", "to": "node", "value": 1.0}, {"from": "sigkill", "title": "Peso: 1.0", "to": "sigterm", "value": 1.0}, {"from": "contentblockparam", "title": "Peso: 3.0", "to": "anthropic", "value": 3.0}, {"from": "json", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "json", "title": "Peso: 1.0", "to": "jsonl", "value": 1.0}, {"from": "json", "title": "Peso: 1.0", "to": "adc", "value": 1.0}, {"from": "useeffect", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "useeffect", "title": "Peso: 8.0", "to": "reactnode", "value": 8.0}, {"from": "als", "title": "Peso: 1.0", "to": "llm", "value": 1.0}, {"from": "setclienttype", "title": "Peso: 1.0", "to": "getusermsgoptin", "value": 1.0}, {"from": "setclienttype", "title": "Peso: 1.0", "to": "setallowedchannels", "value": 1.0}, {"from": "eol", "title": "Peso: 3.0", "to": "windows", "value": 3.0}, {"from": "eol", "title": "Peso: 1.0", "to": "powershell", "value": 1.0}, {"from": "toolresultblockparam", "title": "Peso: 3.0", "to": "anthropic", "value": 3.0}, {"from": "toolresultblockparam", "title": "Peso: 1.0", "to": "textblockparam", "value": 1.0}, {"from": "invalidargumenterror", "title": "Peso: 1.0", "to": "commander-js", "value": 1.0}, {"from": "previousrequestid", "title": "Peso: 2.0", "to": "prenormalizedmodel", "value": 2.0}, {"from": "sigterm", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "ntlm", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "task", "title": "Peso: 5.0", "to": "setappstate", "value": 5.0}, {"from": "jsonl", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "jsonl", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "non-anthropic", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "node", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "sox", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "sox", "title": "Peso: 1.0", "to": "windows", "value": 1.0}, {"from": "sox", "title": "Peso: 4.0", "to": "linux", "value": 4.0}, {"from": "convert", "title": "Peso: 1.0", "to": "textstyle", "value": 1.0}, {"from": "cucalltoolresult", "title": "Peso: 1.0", "to": "ant", "value": 1.0}, {"from": "windows", "title": "Peso: 10.0", "to": "claude", "value": 10.0}, {"from": "windows", "title": "Peso: 18.0", "to": "linux", "value": 18.0}, {"from": "windows", "title": "Peso: 18.0", "to": "git", "value": 18.0}, {"from": "windows", "title": "Peso: 3.0", "to": "jetbrains", "value": 3.0}, {"from": "windows", "title": "Peso: 14.0", "to": "powershell", "value": 14.0}, {"from": "pii", "title": "Peso: 1.0", "to": "datadog", "value": 1.0}, {"from": "closestream", "title": "Peso: 1.0", "to": "anthropic", "value": 1.0}, {"from": "powershell", "title": "Peso: 2.0", "to": "bash", "value": 2.0}, {"from": "powershell", "title": "Peso: 4.0", "to": "git", "value": 4.0}, {"from": "powershell", "title": "Peso: 1.0", "to": "linux", "value": 1.0}, {"from": "powershell", "title": "Peso: 1.0", "to": "docker", "value": 1.0}, {"from": "rest", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "rest", "title": "Peso: 1.0", "to": "gitlab", "value": 1.0}, {"from": "wezterm", "title": "Peso: 1.0", "to": "alacritty", "value": 1.0}, {"from": "http://", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "http://", "title": "Peso: 1.0", "to": "prm", "value": 1.0}, {"from": "ant", "title": "Peso: 2.0", "to": "claude", "value": 2.0}, {"from": "setallowedchannels", "title": "Peso: 1.0", "to": "getusermsgoptin", "value": 1.0}, {"from": "claudecodeinternalevent", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "claudecodeinternalevent", "title": "Peso: 1.0", "to": "statsig", "value": 1.0}, {"from": "anthropic", "title": "Peso: 17.0", "to": "claude", "value": 17.0}, {"from": "anthropic", "title": "Peso: 1.0", "to": "textblockparam", "value": 1.0}, {"from": "readme", "title": "Peso: 4.0", "to": "claude", "value": 4.0}, {"from": "dir", "title": "Peso: 1.0", "to": "git", "value": 1.0}, {"from": "textstyle", "title": "Peso: 1.0", "to": "sgr", "value": 1.0}, {"from": "xaa", "title": "Peso: 1.0", "to": "claude", "value": 1.0}, {"from": "xaa", "title": "Peso: 2.0", "to": "prm", "value": 2.0}, {"from": "taskoutput", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "gcs", "title": "Peso: 5.0", "to": "git", "value": 5.0}, {"from": "claude", "title": "Peso: 2.0", "to": "bash", "value": 2.0}, {"from": "claude", "title": "Peso: 6.0", "to": "ccr", "value": 6.0}, {"from": "claude", "title": "Peso: 4.0", "to": "pid", "value": 4.0}, {"from": "claude", "title": "Peso: 3.0", "to": "linux", "value": 3.0}, {"from": "claude", "title": "Peso: 5.0", "to": "git", "value": 5.0}, {"from": "claude", "title": "Peso: 1.0", "to": "statsig", "value": 1.0}, {"from": "claude", "title": "Peso: 1.0", "to": "java", "value": 1.0}, {"from": "claude", "title": "Peso: 1.0", "to": "cse", "value": 1.0}, {"from": "non-github", "title": "Peso: 1.0", "to": "gitlab", "value": 1.0}, {"from": "linux", "title": "Peso: 3.0", "to": "jetbrains", "value": 3.0}, {"from": "csi", "title": "Peso: 2.0", "to": "sgr", "value": 2.0}, {"from": "setappstate", "title": "Peso: 4.0", "to": "tooluseid", "value": 4.0}, {"from": "@param", "title": "Peso: 2.0", "to": "git", "value": 2.0}, {"from": "git", "title": "Peso: 2.0", "to": "https://github", "value": 2.0}, {"from": "git", "title": "Peso: 1.0", "to": "bash", "value": 1.0}, {"from": "git", "title": "Peso: 4.0", "to": "ccr", "value": 4.0}, {"from": "git", "title": "Peso: 1.0", "to": "vcs", "value": 1.0}, {"from": "git", "title": "Peso: 2.0", "to": "gitlab", "value": 2.0}, {"from": "git", "title": "Peso: 2.0", "to": "docker", "value": 2.0}, {"from": "spring ai", "title": "Peso: 1.0", "to": "java", "value": 1.0}, {"from": "microtask", "title": "Peso: 1.0", "to": "map", "value": 1.0}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.3,
+            "damping": 0.09,
+            "gravitationalConstant": -3000,
+            "springConstant": 0.01,
+            "springLength": 150
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

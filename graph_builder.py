@@ -85,39 +85,45 @@ def build_cooccurrence_graph(
     else:
         raise ValueError(f"Granularidade desconhecida: {config.granularity}")
 
-    # Processar cada texto
+    # Achatar todos os chunks antes para permitir batching real do spaCy
+    chunk_records: list[dict] = []
     for extracted in texts:
-        chunks = split_fn(extracted.text)
+        for chunk in split_fn(extracted.text):
+            chunk_records.append({
+                "text": chunk,
+                "source_file": extracted.source_file,
+            })
 
-        for chunk in chunks:
-            # Extrair entidades do chunk
-            entities = pipeline.extract(chunk, extracted.source_file)
+    print(f"   → {len(chunk_records)} chunks ({config.granularity}); extraindo entidades em batch...")
+    all_entities = pipeline.extract_batch(chunk_records)
 
-            if len(entities) < 2:
-                continue
+    # Construir grafo a partir das entidades extraídas
+    for record, entities in zip(chunk_records, all_entities):
+        if len(entities) < 2:
+            continue
 
-            # Adicionar nós com atributos
-            for entity in entities:
-                name = entity.normalized if config.normalize_names else entity.text
-                if not G.has_node(name):
-                    G.add_node(name, 
-                               label=entity.label,
-                               count=0,
-                               source_files=set())
-                G.nodes[name]["count"] += 1
-                G.nodes[name]["source_files"].add(extracted.source_file)
+        source_file = record["source_file"]
 
-            # Adicionar arestas (co-ocorrência)
-            unique_entities = list(set(
-                e.normalized if config.normalize_names else e.text 
-                for e in entities
-            ))
+        for entity in entities:
+            name = entity.normalized if config.normalize_names else entity.text
+            if not G.has_node(name):
+                G.add_node(name,
+                           label=entity.label,
+                           count=0,
+                           source_files=set())
+            G.nodes[name]["count"] += 1
+            G.nodes[name]["source_files"].add(source_file)
 
-            for e1, e2 in combinations(sorted(unique_entities), 2):
-                if G.has_edge(e1, e2):
-                    G[e1][e2]["weight"] += 1
-                else:
-                    G.add_edge(e1, e2, weight=1)
+        unique_entities = list(set(
+            e.normalized if config.normalize_names else e.text
+            for e in entities
+        ))
+
+        for e1, e2 in combinations(sorted(unique_entities), 2):
+            if G.has_edge(e1, e2):
+                G[e1][e2]["weight"] += 1
+            else:
+                G.add_edge(e1, e2, weight=1)
 
     # Filtrar arestas com peso mínimo
     if config.min_weight > 1:
@@ -217,6 +223,24 @@ if __name__ == "__main__":
         dest="input_jsonl",
         help="Arquivo JSONL gerado pelo extractor.py para pular a etapa de extração",
     )
+    parser.add_argument(
+        "--custom-model",
+        dest="custom_model",
+        default=None,
+        help="Caminho para um modelo spaCy NER customizado (iteração 07)",
+    )
+    parser.add_argument(
+        "--no-regex-fallback",
+        dest="use_regex_fallback",
+        action="store_false",
+        help="Desativa a extração regex/dicionário (somente NER do modelo)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        default="data/graphs",
+        help="Diretório de saída para os arquivos .gexf",
+    )
     args = parser.parse_args()
 
     repo_path = args.repo_path
@@ -231,9 +255,15 @@ if __name__ == "__main__":
     print(f"   → {len(extraction.texts)} blocos extraídos")
 
     # NER + Grafo
-    pipeline = NERPipeline(use_spacy=True)
+    pipeline = NERPipeline(
+        use_spacy=True,
+        custom_model=args.custom_model,
+        use_regex_fallback=args.use_regex_fallback,
+    )
     graphs = build_all_granularities(extraction.texts, pipeline)
 
     # Salvar
+    import os as _os
+    _os.makedirs(args.output_dir, exist_ok=True)
     for name, G in graphs.items():
-        save_graph(G, f"data/graphs/graph_{name}.gexf")
+        save_graph(G, f"{args.output_dir}/graph_{name}.gexf")

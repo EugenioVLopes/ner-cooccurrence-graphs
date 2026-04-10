@@ -1,0 +1,120 @@
+{
+  "metrics": {
+    "sentence": {
+      "nodes": 1520,
+      "edges": 2292,
+      "density": 0.0019853781920238386,
+      "avg_degree": 3.0157894736842104,
+      "max_degree": 134,
+      "min_degree": 1,
+      "std_degree": 7.430627455116514,
+      "num_components": 89,
+      "largest_component_size": 1113,
+      "largest_component_ratio": 0.7322368421052632,
+      "diameter": 11,
+      "avg_path_length": 3.9678327418927393,
+      "avg_clustering": 0.2874641893449436,
+      "max_clustering": 1.0,
+      "transitivity": 0.07650859755704871
+    },
+    "paragraph": {
+      "nodes": 2519,
+      "edges": 7095,
+      "density": 0.0022371675031476424,
+      "avg_degree": 5.633187772925764,
+      "max_degree": 423,
+      "min_degree": 1,
+      "std_degree": 16.67253514457104,
+      "num_components": 83,
+      "largest_component_size": 2173,
+      "largest_component_ratio": 0.8626439063120286,
+      "diameter": 12,
+      "avg_path_length": 3.656235195209244,
+      "avg_clustering": 0.5001035708531539,
+      "max_clustering": 1.0,
+      "transitivity": 0.13195989346702178
+    },
+    "k_chars": {
+      "nodes": 2510,
+      "edges": 5568,
+      "density": 0.0017682954908147402,
+      "avg_degree": 4.436653386454183,
+      "max_degree": 377,
+      "min_degree": 1,
+      "std_degree": 13.745139349328138,
+      "num_components": 93,
+      "largest_component_size": 2113,
+      "largest_component_ratio": 0.8418326693227092,
+      "diameter": 13,
+      "avg_path_length": 3.7637536928681037,
+      "avg_clustering": 0.4654426890096559,
+      "max_clustering": 1.0,
+      "transitivity": 0.07645146561245078
+    }
+  },
+  "communities": {
+    "sentence": {
+      "num_communities": 114,
+      "modularity": 0.7518688632755791,
+      "top_sizes": [
+        326,
+        137,
+        84,
+        81,
+        59,
+        54,
+        48,
+        44,
+        41,
+        33,
+        32,
+        32,
+        29,
+        29,
+        24
+      ]
+    },
+    "paragraph": {
+      "num_communities": 128,
+      "modularity": 0.6280854776844315,
+      "top_sizes": [
+        613,
+        255,
+        214,
+        198,
+        152,
+        99,
+        87,
+        57,
+        52,
+        48,
+        48,
+        46,
+        42,
+        27,
+        24
+      ]
+    },
+    "k_chars": {
+      "num_communities": 131,
+      "modularity": 0.6548037759796195,
+      "top_sizes": [
+        488,
+        275,
+        274,
+        221,
+        200,
+        84,
+        77,
+        45,
+        45,
+        40,
+        32,
+        30,
+        29,
+        29,
+        28
+      ]
+    }
+  }
+}
