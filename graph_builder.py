@@ -217,6 +217,24 @@ if __name__ == "__main__":
         dest="input_jsonl",
         help="Arquivo JSONL gerado pelo extractor.py para pular a etapa de extração",
     )
+    parser.add_argument(
+        "--custom-model",
+        dest="custom_model",
+        default=None,
+        help="Caminho para um modelo spaCy NER customizado (iteração 07)",
+    )
+    parser.add_argument(
+        "--no-regex-fallback",
+        dest="use_regex_fallback",
+        action="store_false",
+        help="Desativa a extração regex/dicionário (somente NER do modelo)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        default="data/graphs",
+        help="Diretório de saída para os arquivos .gexf",
+    )
     args = parser.parse_args()
 
     repo_path = args.repo_path
@@ -231,9 +249,15 @@ if __name__ == "__main__":
     print(f"   → {len(extraction.texts)} blocos extraídos")
 
     # NER + Grafo
-    pipeline = NERPipeline(use_spacy=True)
+    pipeline = NERPipeline(
+        use_spacy=True,
+        custom_model=args.custom_model,
+        use_regex_fallback=args.use_regex_fallback,
+    )
     graphs = build_all_granularities(extraction.texts, pipeline)
 
     # Salvar
+    import os as _os
+    _os.makedirs(args.output_dir, exist_ok=True)
     for name, G in graphs.items():
-        save_graph(G, f"data/graphs/graph_{name}.gexf")
+        save_graph(G, f"{args.output_dir}/graph_{name}.gexf")

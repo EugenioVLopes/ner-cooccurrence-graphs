@@ -281,6 +281,8 @@ def extract_spacy_entities(text: str, nlp, source_file: str = "") -> list[Entity
         "GPE": "LOC", "LOC": "LOC", "FAC": "LOC",
         "PRODUCT": "TECH", "WORK_OF_ART": "MISC",
         "EVENT": "MISC", "LANGUAGE": "TECH",
+        # labels emitidos pelo modelo NER customizado (iteração 07)
+        "LIB": "LIB", "CLASS": "CLASS", "FUNC": "FUNC", "TECH": "TECH",
     }
 
     for ent in doc.ents:
@@ -319,19 +321,29 @@ class NERPipeline:
     Pipeline completo de NER que combina spaCy com extração customizada.
     """
 
-    def __init__(self, spacy_model: str = "en_core_web_lg", use_spacy: bool = True):
+    def __init__(
+        self,
+        spacy_model: str = "en_core_web_lg",
+        use_spacy: bool = True,
+        custom_model: Optional[str] = None,
+        use_regex_fallback: bool = True,
+    ):
         self.use_spacy = use_spacy and SPACY_AVAILABLE
+        self.use_regex_fallback = use_regex_fallback
+        self.custom_model_path = custom_model
         self.nlp = None
 
         if self.use_spacy:
+            model_to_load = custom_model or spacy_model
             try:
-                self.nlp = spacy.load(spacy_model)
+                self.nlp = spacy.load(model_to_load)
                 # Aumentar limite para textos grandes
                 self.nlp.max_length = 2_000_000
-                print(f"✅ Modelo spaCy carregado: {spacy_model}")
+                kind = "customizado" if custom_model else "pré-treinado"
+                print(f"✅ Modelo spaCy {kind} carregado: {model_to_load}")
             except OSError:
-                print(f"⚠️  Modelo '{spacy_model}' não encontrado. "
-                      f"Instale com: python -m spacy download {spacy_model}")
+                print(f"⚠️  Modelo '{model_to_load}' não encontrado. "
+                      f"Instale com: python -m spacy download {model_to_load}")
                 print("   Continuando apenas com extração customizada.")
                 self.use_spacy = False
 
@@ -341,12 +353,12 @@ class NERPipeline:
         """
         entities = []
 
-        # Extração customizada de código
-        entities.extend(extract_code_entities(text, source_file))
+        # Extração customizada de código (regex + dicionário)
+        if self.use_regex_fallback:
+            entities.extend(extract_code_entities(text, source_file))
 
-        # Extração com spaCy (se disponível)
+        # Extração com spaCy (custom ou pré-treinado)
         if self.use_spacy and self.nlp:
-            # Limitar tamanho do texto para spaCy
             truncated = text[:1_000_000] if len(text) > 1_000_000 else text
             entities.extend(extract_spacy_entities(truncated, self.nlp, source_file))
 
