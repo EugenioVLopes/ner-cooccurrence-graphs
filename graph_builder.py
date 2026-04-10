@@ -85,39 +85,45 @@ def build_cooccurrence_graph(
     else:
         raise ValueError(f"Granularidade desconhecida: {config.granularity}")
 
-    # Processar cada texto
+    # Achatar todos os chunks antes para permitir batching real do spaCy
+    chunk_records: list[dict] = []
     for extracted in texts:
-        chunks = split_fn(extracted.text)
+        for chunk in split_fn(extracted.text):
+            chunk_records.append({
+                "text": chunk,
+                "source_file": extracted.source_file,
+            })
 
-        for chunk in chunks:
-            # Extrair entidades do chunk
-            entities = pipeline.extract(chunk, extracted.source_file)
+    print(f"   → {len(chunk_records)} chunks ({config.granularity}); extraindo entidades em batch...")
+    all_entities = pipeline.extract_batch(chunk_records)
 
-            if len(entities) < 2:
-                continue
+    # Construir grafo a partir das entidades extraídas
+    for record, entities in zip(chunk_records, all_entities):
+        if len(entities) < 2:
+            continue
 
-            # Adicionar nós com atributos
-            for entity in entities:
-                name = entity.normalized if config.normalize_names else entity.text
-                if not G.has_node(name):
-                    G.add_node(name, 
-                               label=entity.label,
-                               count=0,
-                               source_files=set())
-                G.nodes[name]["count"] += 1
-                G.nodes[name]["source_files"].add(extracted.source_file)
+        source_file = record["source_file"]
 
-            # Adicionar arestas (co-ocorrência)
-            unique_entities = list(set(
-                e.normalized if config.normalize_names else e.text 
-                for e in entities
-            ))
+        for entity in entities:
+            name = entity.normalized if config.normalize_names else entity.text
+            if not G.has_node(name):
+                G.add_node(name,
+                           label=entity.label,
+                           count=0,
+                           source_files=set())
+            G.nodes[name]["count"] += 1
+            G.nodes[name]["source_files"].add(source_file)
 
-            for e1, e2 in combinations(sorted(unique_entities), 2):
-                if G.has_edge(e1, e2):
-                    G[e1][e2]["weight"] += 1
-                else:
-                    G.add_edge(e1, e2, weight=1)
+        unique_entities = list(set(
+            e.normalized if config.normalize_names else e.text
+            for e in entities
+        ))
+
+        for e1, e2 in combinations(sorted(unique_entities), 2):
+            if G.has_edge(e1, e2):
+                G[e1][e2]["weight"] += 1
+            else:
+                G.add_edge(e1, e2, weight=1)
 
     # Filtrar arestas com peso mínimo
     if config.min_weight > 1:

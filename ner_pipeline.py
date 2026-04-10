@@ -266,42 +266,33 @@ def extract_code_entities(text: str, source_file: str = "") -> list[Entity]:
     return entities
 
 
-def extract_spacy_entities(text: str, nlp, source_file: str = "") -> list[Entity]:
-    """
-    Extrai entidades usando spaCy (PER, ORG, LOC, MISC).
-    Aplica filtros de ruído e reclassificação de entidades técnicas.
-    """
-    doc = nlp(text)
+_SPACY_LABEL_MAP = {
+    "PERSON": "PER", "PER": "PER",
+    "ORG": "ORG", "ORGANIZATION": "ORG",
+    "GPE": "LOC", "LOC": "LOC", "FAC": "LOC",
+    "PRODUCT": "TECH", "WORK_OF_ART": "MISC",
+    "EVENT": "MISC", "LANGUAGE": "TECH",
+    # labels emitidos pelo modelo NER customizado (iteração 07)
+    "LIB": "LIB", "CLASS": "CLASS", "FUNC": "FUNC", "TECH": "TECH",
+}
+
+
+def _entities_from_doc(doc, source_file: str = "") -> list[Entity]:
+    """Converte um Doc spaCy em Entity[] aplicando filtros e reclassificação."""
     entities = []
-
-    # Mapeamento de labels do spaCy para nosso esquema
-    label_map = {
-        "PERSON": "PER", "PER": "PER",
-        "ORG": "ORG", "ORGANIZATION": "ORG",
-        "GPE": "LOC", "LOC": "LOC", "FAC": "LOC",
-        "PRODUCT": "TECH", "WORK_OF_ART": "MISC",
-        "EVENT": "MISC", "LANGUAGE": "TECH",
-        # labels emitidos pelo modelo NER customizado (iteração 07)
-        "LIB": "LIB", "CLASS": "CLASS", "FUNC": "FUNC", "TECH": "TECH",
-    }
-
     for ent in doc.ents:
         clean = ent.text.strip()
         lower = clean.lower()
 
-        # Filtros de ruído
         if lower in STOPWORDS:
             continue
         if _is_noise(clean):
             continue
 
-        label = label_map.get(ent.label_, "MISC")
+        label = _SPACY_LABEL_MAP.get(ent.label_, "MISC")
 
-        # Reclassificar siglas tech que spaCy marca como ORG
         if label == "ORG" and lower in TECH_RECLASSIFY:
             label = "TECH"
-
-        # Reclassificar ferramentas que spaCy marca como PER
         if label == "PER" and lower in TOOL_RECLASSIFY:
             label = "TECH"
 
@@ -314,6 +305,11 @@ def extract_spacy_entities(text: str, nlp, source_file: str = "") -> list[Entity
         ))
 
     return entities
+
+
+def extract_spacy_entities(text: str, nlp, source_file: str = "") -> list[Entity]:
+    """Extrai entidades usando spaCy (PER, ORG, LOC, MISC)."""
+    return _entities_from_doc(nlp(text), source_file)
 
 
 class NERPipeline:
@@ -367,21 +363,55 @@ class NERPipeline:
 
         return entities
 
-    def extract_batch(self, texts: list[dict]) -> list[list[Entity]]:
+    def extract_batch(
+        self,
+        texts: list,
+        batch_size: int = 64,
+    ) -> list[list[Entity]]:
         """
-        Extrai entidades de múltiplos textos.
-        
+        Extrai entidades de múltiplos textos usando nlp.pipe para batching real.
+
         Args:
-            texts: Lista de dicts com 'text' e opcionalmente 'source_file'
-        
+            texts: Lista de dicts com 'text' (e opcionalmente 'source_file') ou strings
+            batch_size: Tamanho do batch passado para nlp.pipe
+
         Returns:
-            Lista de listas de entidades (uma por texto)
+            Lista de listas de entidades, alinhada com a ordem de entrada
         """
-        results = []
+        items = []
         for item in texts:
-            text = item["text"] if isinstance(item, dict) else item
-            source = item.get("source_file", "") if isinstance(item, dict) else ""
-            results.append(self.extract(text, source))
+            if isinstance(item, dict):
+                items.append((item["text"], item.get("source_file", "")))
+            else:
+                items.append((item, ""))
+
+        # Extração regex/dicionário (rápido, feito por item)
+        regex_results: list[list[Entity]] = []
+        for text, source in items:
+            if self.use_regex_fallback:
+                regex_results.append(extract_code_entities(text, source))
+            else:
+                regex_results.append([])
+
+        # Extração spaCy em batch real
+        spacy_results: list[list[Entity]] = [[] for _ in items]
+        if self.use_spacy and self.nlp:
+            truncated = [
+                (t[:1_000_000] if len(t) > 1_000_000 else t, s)
+                for t, s in items
+            ]
+            texts_only = [t for t, _ in truncated]
+            sources = [s for _, s in truncated]
+            docs = self.nlp.pipe(texts_only, batch_size=batch_size)
+            for idx, doc in enumerate(docs):
+                spacy_results[idx] = _entities_from_doc(doc, sources[idx])
+
+        # Combinar e deduplicar
+        results = []
+        for regex_ents, spacy_ents in zip(regex_results, spacy_results):
+            combined = regex_ents + spacy_ents
+            results.append(self._deduplicate(combined))
+
         return results
 
     @staticmethod
