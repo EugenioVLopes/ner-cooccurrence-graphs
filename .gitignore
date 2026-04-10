@@ -33,3 +33,7 @@ slides/
 # Outputs
 *.gexf
 *.graphml
+
+# Training artifacts (iteration 07)
+data/training/*.spacy
+models/
