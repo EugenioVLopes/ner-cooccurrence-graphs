@@ -8,7 +8,7 @@ Substituição do modelo NER genérico (`en_core_web_lg`) por um modelo spaCy
 _catastrophic forgetting_. Também foi otimizado o pipeline de construção de
 grafo para usar `nlp.pipe` em batch.
 
-## Motivação
+### Motivação
 
 A iteração 06 limpou o ruído do spaCy genérico, mas algumas limitações
 permaneciam:
@@ -19,7 +19,7 @@ permaneciam:
 - O regex era rígido: só captura padrões explícitos (`import X from`,
   `class X`) e não generaliza para menções contextuais
 
-A solução é treinar o próprio modelo a reconhecer entidades de código a
+A solução desta iteração é treinar o próprio modelo a reconhecer entidades de código a
 partir de exemplos reais.
 
 ## Arquivos criados/modificados
@@ -33,7 +33,9 @@ partir de exemplos reais.
 | `graph_builder.py`          | **Modificado** — coleta chunks antes e chama `extract_batch` uma vez                              |
 | `.gitignore`                | **Modificado** — ignora `data/training/*.spacy` e `models/`                                       |
 
-## Pipeline de treinamento
+## Evidência
+
+### Pipeline de treinamento
 
 ### 1. Geração de dados silver (`generate_training_data.py`)
 
@@ -83,7 +85,7 @@ evaluate:      spacy evaluate → models/custom-ner/metrics.json
 clean-training: remove binários gerados
 ```
 
-## Métricas do modelo (dev set)
+### Métricas do modelo (dev set)
 
 Avaliação após `make train` (em `models/custom-ner/metrics.json`):
 
@@ -109,7 +111,7 @@ Avaliação após `make train` (em `models/custom-ner/metrics.json`):
   tendem a ser ruído (nomes de cidades em comentários/docs)
 - Velocidade: **5510 palavras/s** — adequado para processar o repositório
 
-## Otimização: batch real com `nlp.pipe`
+### Otimização: batch real com `nlp.pipe`
 
 O `graph_builder.py` original chamava `pipeline.extract(chunk)` em loop,
 executando `nlp(text)` individualmente para cada chunk. Com 138k chunks de
@@ -129,7 +131,7 @@ sentença isso levaria horas.
 Resultado: as 3 granularidades processam em **poucos minutos** em vez de
 uma hora.
 
-## Métricas do grafo (iter-07 vs iter-06)
+### Métricas do grafo (iter-07 vs iter-06)
 
 ### Tamanho
 
@@ -224,23 +226,31 @@ incluía.
 
 ![Distribuição de tamanhos das comunidades por parágrafo](../figures/07-custom-ner-training/community_sizes_paragraph.png)
 
-## Visualizações interativas
+## Análise
+
+- O modelo customizado preserva o ranking das entidades realmente centrais e,
+  ao mesmo tempo, reduz o volume de nós e arestas sem quebrar a conectividade
+  principal do grafo.
+- A queda no número de componentes e o aumento relativo de densidade indicam
+  que a poda ocorreu principalmente sobre ruído e não sobre estrutura útil.
+- As comunidades continuam coerentes após a troca de modelo, o que reforça que
+  a semântica principal do repositório foi mantida.
+
+## Limitações
+
+### Silver labeling
+
+- O modelo foi treinado com anotações geradas automaticamente, não revisadas
+  manualmente.
+- Isso cria teto de desempenho herdado do regex/dicionário e propaga parte dos
+  erros de rotulagem do pipeline anterior.
+- Labels menos frequentes, como `LOC`, continuam com desempenho inferior.
+
+## Próximos passos
 
 - [Abrir grafo interativo de sentença](../figures/07-custom-ner-training/interactive_sentence.html)
 - [Abrir grafo interativo de parágrafo](../figures/07-custom-ner-training/interactive_paragraph.html)
 - [Abrir grafo interativo de k-chars (500)](../figures/07-custom-ner-training/interactive_k_chars.html)
-
-## Limitações do silver labeling
-
-O modelo foi treinado com anotações geradas automaticamente, não revisadas
-manualmente. Isso implica:
-
-1. **Tetos de performance herdados do regex**: o modelo não aprende
-   entidades que o regex/dicionário nunca marcou
-2. **Propagação de erros**: se o regex confunde `node` (ferramenta) com
-   `node` (nó de grafo), o modelo herda a confusão
-3. **Viés de cobertura**: labels com muitos exemplos (`TECH`, `ORG`)
-   aprendem melhor; `LOC` (605 exemplos) tem F1 apenas 0,48
 
 Para uma iteração futura, um conjunto **gold** anotado manualmente em
 ~500 blocos traria ganhos reais, especialmente para `CLASS` e `FUNC` onde

@@ -6,7 +6,9 @@
 - `full_analysis()` agora gera HTMLs interativos para cada granularidade.
 - Novas visualizações em `figures/05-pyvis/`.
 
-## Como funciona
+## Evidência
+
+### Como funciona
 
 ### Seleção de nós
 
@@ -32,7 +34,7 @@ enquanto elimina nós periféricos de baixo grau.
 - **Filter menu**: buscar nós específicos
 - **Física**: simulação Barnes-Hut com gravidade -3000
 
-## Resultados por granularidade
+### Resultados por granularidade
 
 O GitHub não renderiza os arquivos HTML interativos inline dentro do Markdown.
 Por isso, os links abaixo apontam para os artefatos gerados em cada granularidade.
@@ -84,6 +86,20 @@ O pyvis resolve isso com:
 - A granularidade **parágrafo** produz o grafo mais informativo para
   exploração interativa — densidade suficiente para ver relações,
   sem o ruído excessivo de k-chars.
+
+## Limitações
+
+- O GitHub não renderiza os HTMLs inline; a exploração depende de abrir os
+  artefatos gerados separadamente.
+- A visualização usa apenas os 300 nós mais conectados, então entidades
+  periféricas ficam fora do recorte interativo.
+- O layout físico melhora a exploração, mas não substitui métricas formais de
+  centralidade ou modularidade.
+
+## Próximos passos
+
+- Aplicar a visualização interativa aos grafos filtrados para reduzir ruído.
+- Usar a interface como apoio para validar comunidades e entidades centrais.
 
 ## Figuras geradas
 

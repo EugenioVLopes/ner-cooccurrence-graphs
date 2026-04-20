@@ -7,7 +7,9 @@
 - Novas visualizações: grafo colorido por comunidade e distribuição de tamanhos.
 - `full_analysis()` agora inclui comunidades automaticamente.
 
-## Resultados por granularidade
+## Evidência
+
+### Resultados por granularidade
 
 ### Sentença
 
@@ -49,7 +51,7 @@
 | C3         | 312 | MCP                    | mcp, ScopedMcpServerConfig, lsp             |
 | C4         | 301 | UI rendering           | ink, ScrollBox, SGR, DOM, ANSI              |
 
-## Análise dos clusters temáticos
+## Análise
 
 ### Clusters consistentes entre granularidades
 
@@ -97,6 +99,20 @@ A detecção de comunidades revela a arquitetura do Claude Code:
   a camada de API, sugerindo boa separação de responsabilidades.
 
 ![Top entidades por centralidade](../figures/04-louvain/centrality_comparison.png)
+
+## Limitações
+
+- A separação temática depende fortemente da granularidade escolhida; em
+  parágrafo, alguns subsistemas ainda aparecem fundidos no mesmo cluster.
+- Os clusters continuam sensíveis ao ruído residual herdado da iteração 03,
+  especialmente em entidades técnicas ambíguas.
+- A interpretação semântica dos grupos ainda exige inspeção manual; o Louvain
+  organiza a estrutura, mas não nomeia automaticamente as comunidades.
+
+## Próximos passos
+
+- Explorar visualização interativa para inspecionar fronteiras entre comunidades.
+- Reduzir ruído residual do NER para melhorar a coesão temática dos clusters.
 
 ## Figuras geradas
 

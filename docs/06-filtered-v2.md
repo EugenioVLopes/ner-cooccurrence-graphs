@@ -83,7 +83,7 @@ Adicionado `min_component_size=3` ao `CoOccurrenceConfig` no `graph_builder.py`.
 Componentes conectados com menos de 3 nós são removidos do grafo, eliminando
 pares isolados que não contribuem para a análise de co-ocorrência.
 
-## Comparação de métricas
+## Evidência
 
 ### Tamanho dos grafos
 
@@ -162,6 +162,8 @@ A remoção de ruído melhorou significativamente a qualidade:
 
 ![Comunidades Louvain por parágrafo](../figures/06-filtered-v2/communities_paragraph.png)
 
+## Limitações
+
 ### Limitações remanescentes
 
 - **PowerShell como ORG**: o spaCy insiste em classificar como organização;
@@ -172,6 +174,12 @@ A remoção de ruído melhorou significativamente a qualidade:
   com custom training resolveria esses casos restantes
 
 ![Top entidades por centralidade](../figures/06-filtered-v2/centrality_comparison.png)
+
+## Próximos passos
+
+- Reclassificar casos persistentes como `PowerShell`, `dom` e `sgr`.
+- Avaliar um modelo treinado especificamente para código para substituir parte
+  das heurísticas manuais.
 
 ## Figuras geradas
 

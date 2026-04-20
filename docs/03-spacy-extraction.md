@@ -9,7 +9,7 @@
 - Default do `NERPipeline` alterado de `pt_core_news_lg` para `en_core_web_lg`.
 - `graph_builder.py` agora roda com spaCy habilitado por padrão.
 
-## Comparação com iteração anterior (02-filtered, regex only)
+## Evidência
 
 ### Tamanho dos grafos
 
@@ -55,7 +55,7 @@ entidades de linguagem natural que o regex não capturava.
 
 ## Análise
 
-### 1. Impacto do spaCy
+### Impacto do spaCy
 
 - O número de entidades únicas cresceu ~4x, confirmando que o spaCy captura
   informação que o regex puro não alcança (nomes próprios, organizações,
@@ -68,7 +68,7 @@ entidades de linguagem natural que o regex não capturava.
 
 ![Distribuição de grau por parágrafo](../figures/03-spacy/degree_dist_paragraph.png)
 
-### 2. Estrutura da rede
+### Estrutura da rede
 
 - O maior componente encolheu proporcionalmente (75% → 60%) porque as novas
   entidades do spaCy formam muitos pequenos clusters isolados.
@@ -77,7 +77,7 @@ entidades de linguagem natural que o regex não capturava.
 - Apesar disso, o diâmetro diminuiu (12 → 11) e o caminho médio encurtou
   (4,16 → 3,88), sugerindo que os hubs centrais ficaram mais conectados.
 
-### 3. Entidades centrais
+### Entidades centrais
 
 - **`claude`** consolidou-se como hub principal (grau 677, 4x mais que antes).
 - **`cli`** aparece como nova entidade relevante (ORG, grau 261) — detectada
@@ -89,7 +89,9 @@ entidades de linguagem natural que o regex não capturava.
 
 ![Top entidades por centralidade](../figures/03-spacy/centrality_comparison.png)
 
-### 4. Ruído residual
+## Limitações
+
+### Ruído residual
 
 - `cli` classificado como ORG pelo spaCy — deveria ser TECH ou MISC.
 - Algumas entidades curtas do spaCy podem ser falsos positivos (e.g., siglas
@@ -99,7 +101,7 @@ entidades de linguagem natural que o regex não capturava.
 
 ![Grafo de co-ocorrência por parágrafo](../figures/03-spacy/graph_viz_paragraph.png)
 
-### 5. Próximos passos
+## Próximos passos
 
 - Detecção de comunidades (Louvain) para identificar clusters temáticos.
 - Visualização interativa com pyvis.
