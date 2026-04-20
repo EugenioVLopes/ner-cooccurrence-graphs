@@ -26,6 +26,10 @@ Explore os grafos de co-ocorrencia diretamente no navegador:
 - [Grafo — Paragrafo](https://eugeniovlopes.github.io/ner-cooccurrence-graphs/figures/05-pyvis/interactive_paragraph.html)
 - [Grafo — K-chars (500)](https://eugeniovlopes.github.io/ner-cooccurrence-graphs/figures/05-pyvis/interactive_k_chars.html)
 
+### Apresentacao
+
+- [Video da apresentacao](https://www.loom.com/share/6847ab5debdd4637aca2735166c17466)
+
 ## Estrutura do Repositorio
 
 ```
@@ -106,6 +110,8 @@ Metricas e visualizacoes:
 | 03  | NER com spaCy (en_core_web_lg)  | [relatorio](docs/03-spacy-extraction.md)    | `figures/03-spacy/`    |
 | 04  | Comunidades Louvain             | [relatorio](docs/04-louvain-communities.md) | `figures/04-louvain/`  |
 | 05  | Visualizacao interativa (pyvis) | [relatorio](docs/05-pyvis-interactive.md)   | `figures/05-pyvis/`    |
+| 06  | Filtragem avancada de ruido NER | [relatorio](docs/06-filtered-v2.md)         | `figures/06-filtered-v2/` |
+| 07  | Treinamento de NER customizado  | [relatorio](docs/07-custom-ner-training.md) | `figures/07-custom-ner-training/` |
 
 ## Tecnologias
 
