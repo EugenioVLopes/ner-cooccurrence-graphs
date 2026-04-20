@@ -34,6 +34,9 @@ enquanto elimina nós periféricos de baixo grau.
 
 ## Resultados por granularidade
 
+O GitHub não renderiza os arquivos HTML interativos inline dentro do Markdown.
+Por isso, os links abaixo apontam para os artefatos gerados em cada granularidade.
+
 ### Sentença (300 nós / 5.791 total)
 
 - Grafo mais esparso — nós de mesmo tema ficam agrupados mas com poucos
@@ -41,17 +44,23 @@ enquanto elimina nós periféricos de baixo grau.
 - Comunidades visualmente bem separadas.
 - Arquivo: 2.5 MB (mais arestas entre top-300 hubs).
 
+[Abrir grafo interativo de sentença](../figures/05-pyvis/interactive_sentence.html)
+
 ### Parágrafo (300 nós / 7.746 total)
 
 - Grafo mais denso — muitas co-ocorrências em blocos maiores.
 - Cluster central (API + MCP + auth) domina o centro.
 - Arquivo: 655 KB.
 
+[Abrir grafo interativo de parágrafo](../figures/05-pyvis/interactive_paragraph.html)
+
 ### K-chars 500 (300 nós / 7.845 total)
 
 - Intermediário entre sentença e parágrafo.
 - Boa separação de subsistemas (OAuth, UI, Git como clusters distintos).
 - Arquivo: 284 KB.
+
+[Abrir grafo interativo de k-chars (500)](../figures/05-pyvis/interactive_k_chars.html)
 
 ## Análise
 

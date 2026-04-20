@@ -73,6 +73,10 @@ Independente da granularidade, os mesmos temas emergem:
 6. **Autenticação** — `oauth`, `jwt`, `anthropic`.
    Subsistema de login e tokens.
 
+![Tabela comparativa de métricas](../figures/04-louvain/comparison_table.png)
+
+![Comunidades Louvain por parágrafo](../figures/04-louvain/communities_paragraph.png)
+
 ### Separação por granularidade
 
 - **Sentença** produz a melhor separação temática (modularity 0,85) — cada
@@ -80,6 +84,8 @@ Independente da granularidade, os mesmos temas emergem:
 - **Parágrafo** mescla temas no cluster C0 (API + MCP + auth juntos) — reflete
   que esses subsistemas são mencionados juntos nos mesmos blocos de código.
 - **K-chars** fica entre os dois, com OAuth se separando como cluster próprio.
+
+![Distribuição de tamanhos das comunidades por parágrafo](../figures/04-louvain/community_sizes_paragraph.png)
 
 ### Insight arquitetural
 
@@ -89,6 +95,8 @@ A detecção de comunidades revela a arquitetura do Claude Code:
 - **Subsistemas satélite** (MCP, UI, Git, OS) com interfaces claras
 - A camada de **UI** é surpreendentemente isolada — pouca co-ocorrência com
   a camada de API, sugerindo boa separação de responsabilidades.
+
+![Top entidades por centralidade](../figures/04-louvain/centrality_comparison.png)
 
 ## Figuras geradas
 

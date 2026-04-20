@@ -142,6 +142,8 @@ uma hora.
 A redução (~20%) vem do modelo ter aprendido a **não** rotular fragmentos
 genéricos que o regex capturava às cegas via dicionário.
 
+![Tabela comparativa entre granularidades](../figures/07-custom-ner-training/comparison_table.png)
+
 ### Parágrafo (grafo principal)
 
 | Métrica              | 06 (filtrado) | 07 (custom NER) |
@@ -188,6 +190,8 @@ O ranking é praticamente idêntico ao da iter-06, confirmando que o modelo
 aprendeu os termos certos como centrais. Os graus absolutos diminuíram
 proporcionalmente à poda de ruído.
 
+![Top entidades por centralidade](../figures/07-custom-ner-training/centrality_comparison.png)
+
 ### Comunidades Louvain (parágrafo, iter-07)
 
 | Comunidade | Nós | Tema                    | Membros principais                       |
@@ -202,6 +206,8 @@ As comunidades permanecem temáticas e coerentes. A iter-07 captura novas
 entidades (`ansi`, `dom`, `unc`, `cse`) que o dicionário do iter-06 não
 incluía.
 
+![Comunidades Louvain por parágrafo](../figures/07-custom-ner-training/communities_paragraph.png)
+
 ### Comparativo entre granularidades (iter-07)
 
 | Granularidade | Nós   | Arestas | Densidade | Clustering | Modularity | Comunidades |
@@ -215,6 +221,14 @@ incluía.
 - **paragraph**: melhor equilíbrio — alto clustering, mais conexões
 - **k_chars**: intermediário; janela fixa gera co-ocorrências artificiais
   entre entidades de tópicos distintos, reduzindo clustering
+
+![Distribuição de tamanhos das comunidades por parágrafo](../figures/07-custom-ner-training/community_sizes_paragraph.png)
+
+## Visualizações interativas
+
+- [Abrir grafo interativo de sentença](../figures/07-custom-ner-training/interactive_sentence.html)
+- [Abrir grafo interativo de parágrafo](../figures/07-custom-ner-training/interactive_paragraph.html)
+- [Abrir grafo interativo de k-chars (500)](../figures/07-custom-ner-training/interactive_k_chars.html)
 
 ## Limitações do silver labeling
 

@@ -80,6 +80,8 @@ A codebase do Claude Code é altamente modular (16k imports, 1.888 arquivos TS).
 O volume de comentários (56% dos blocos) indica boa documentação inline — fonte
 rica para NER de linguagem natural quando spaCy for adicionado.
 
+![Tabela comparativa de métricas](../figures/01-initial/comparison_table.png)
+
 ### 2. Comparação entre granularidades
 
 - **Sentença** produz o grafo mais esparso (densidade 0,0025, grau médio 2,4).
@@ -92,6 +94,8 @@ rica para NER de linguagem natural quando spaCy for adicionado.
   mas com menos arestas, sugerindo que a janela fixa perde co-ocorrências
   de longa distância que o parágrafo natural captura.
 
+![Distribuição de grau por parágrafo](../figures/01-initial/degree_dist_paragraph.png)
+
 ### 3. Entidades centrais
 
 - **`src`** aparece como nó mais conectado (grau 214) por ser parte dos
@@ -103,6 +107,8 @@ rica para NER de linguagem natural quando spaCy for adicionado.
 - **`ink`** e **`react`** indicam a stack de UI (Ink é o framework React
   para CLIs que o Claude Code usa).
 
+![Top entidades por centralidade](../figures/01-initial/centrality_comparison.png)
+
 ### 4. Propriedades de rede
 
 - O clustering médio alto (0,49 em parágrafo) indica forte agrupamento
@@ -110,6 +116,8 @@ rica para NER de linguagem natural quando spaCy for adicionado.
   módulos coesos.
 - A transitividade (0,33 em parágrafo) sugere estrutura de comunidades
   — provável que Louvain revele clusters temáticos (tools, UI, API, auth).
+
+![Grafo de co-ocorrência por parágrafo](../figures/01-initial/graph_viz_paragraph.png)
 
 ### 5. Problemas identificados
 

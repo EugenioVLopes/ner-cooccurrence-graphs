@@ -64,6 +64,10 @@ entidades de linguagem natural que o regex não capturava.
   entidades de linguagem natural co-ocorrem menos entre si que entidades de
   código.
 
+![Tabela comparativa de métricas](../figures/03-spacy/comparison_table.png)
+
+![Distribuição de grau por parágrafo](../figures/03-spacy/degree_dist_paragraph.png)
+
 ### 2. Estrutura da rede
 
 - O maior componente encolheu proporcionalmente (75% → 60%) porque as novas
@@ -83,6 +87,8 @@ entidades de linguagem natural que o regex não capturava.
 - **`oauth`** e **`windows`** subiram no ranking, refletindo os subsistemas
   de autenticação e compatibilidade cross-platform.
 
+![Top entidades por centralidade](../figures/03-spacy/centrality_comparison.png)
+
 ### 4. Ruído residual
 
 - `cli` classificado como ORG pelo spaCy — deveria ser TECH ou MISC.
@@ -90,6 +96,8 @@ entidades de linguagem natural que o regex não capturava.
   de 3 letras).
 - A stoplist expandida filtrou os piores casos (`função`, `first`, `one`,
   `max`, `sdk`).
+
+![Grafo de co-ocorrência por parágrafo](../figures/03-spacy/graph_viz_paragraph.png)
 
 ### 5. Próximos passos
 

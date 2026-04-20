@@ -158,6 +158,10 @@ A remoção de ruído melhorou significativamente a qualidade:
 - **Clustering alto** (0,53): indica que vizinhos tendem a estar conectados
   entre si — estrutura de comunidades real, não artefato
 
+![Tabela comparativa de métricas](../figures/06-filtered-v2/comparison_table.png)
+
+![Comunidades Louvain por parágrafo](../figures/06-filtered-v2/communities_paragraph.png)
+
 ### Limitações remanescentes
 
 - **PowerShell como ORG**: o spaCy insiste em classificar como organização;
@@ -166,6 +170,8 @@ A remoção de ruído melhorou significativamente a qualidade:
   `posix` ainda são classificadas como ORG
 - O modelo `en_core_web_lg` não foi treinado para código — uma iteração futura
   com custom training resolveria esses casos restantes
+
+![Top entidades por centralidade](../figures/06-filtered-v2/centrality_comparison.png)
 
 ## Figuras geradas
 
@@ -178,3 +184,9 @@ A remoção de ruído melhorou significativamente a qualidade:
 | `figures/06-filtered-v2/comparison_table.png` | Tabela comparativa |
 | `figures/06-filtered-v2/centrality_comparison.png` | Top entidades por centralidade |
 | `figures/06-filtered-v2/interactive_*.html` | Visualizações interativas (pyvis) |
+
+### Visualizações interativas
+
+- [Abrir grafo interativo de sentença](../figures/06-filtered-v2/interactive_sentence.html)
+- [Abrir grafo interativo de parágrafo](../figures/06-filtered-v2/interactive_paragraph.html)
+- [Abrir grafo interativo de k-chars (500)](../figures/06-filtered-v2/interactive_k_chars.html)

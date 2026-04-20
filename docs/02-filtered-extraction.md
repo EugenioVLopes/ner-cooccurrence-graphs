@@ -77,9 +77,11 @@ NER executado com regex + dicionários (sem spaCy), com filtragem de ruído
 
 ### 1. Estrutura geral
 
-A codebase do Claude Code é altamente modular (16k imports, 1.888 arquivos TS).
-O volume de comentários (56% dos blocos) indica boa documentação inline — fonte
-rica para NER de linguagem natural quando spaCy for adicionado.
+Em relação à iteração 01, a estrutura do repositório analisado permanece a
+mesma. A mudança desta etapa está na qualidade semântica do grafo: a filtragem
+remove nós artificiais e torna as relações entre entidades mais interpretáveis.
+
+![Tabela comparativa de métricas](../figures/02-filtered/comparison_table.png)
 
 ### 2. Comparação entre granularidades
 
@@ -93,6 +95,8 @@ rica para NER de linguagem natural quando spaCy for adicionado.
   mas com menos arestas (4.163 vs 4.931), sugerindo que a janela fixa perde
   co-ocorrências de longa distância que o parágrafo natural captura.
 
+![Distribuição de grau por parágrafo](../figures/02-filtered/degree_dist_paragraph.png)
+
 ### 3. Entidades centrais
 
 - **`claude`** é o hub principal da rede (grau 156), conectando módulos de
@@ -104,6 +108,8 @@ rica para NER de linguagem natural quando spaCy for adicionado.
 - **`ink`** e **`react`** revelam a stack de UI (Ink é o framework React para
   CLIs que o Claude Code usa).
 
+![Top entidades por centralidade](../figures/02-filtered/centrality_comparison.png)
+
 ### 4. Propriedades de rede
 
 - O clustering médio alto (0,49 em parágrafo) indica forte agrupamento local —
@@ -112,6 +118,8 @@ rica para NER de linguagem natural quando spaCy for adicionado.
   provável que Louvain revele clusters temáticos (tools, UI, API, auth, MCP).
 - O diâmetro de 12 (parágrafo) indica que as entidades mais distantes da rede
   ainda estão a no máximo 12 passos, sugerindo boa conectividade interna.
+
+![Grafo de co-ocorrência por parágrafo](../figures/02-filtered/graph_viz_paragraph.png)
 
 ### 5. Filtragem de ruído aplicada
 
